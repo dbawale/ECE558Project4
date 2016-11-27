@@ -20,5 +20,29 @@
         android:layout_height="wrap_content"
         android:text="send"
         android:id="@+id/sndbtn"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Generate"
+        android:id="@+id/generaterandombtn"
+        />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Clear"
+        android:id="@+id/clearbtn"
+        />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="RANDOMIZE!!"
+        android:id="@+id/randomizebtn"
+        />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="STOP!!"
+        android:id="@+id/stopbtn"
+        />
 
 </LinearLayout>
