@@ -79,6 +79,7 @@ private static final String TAG = "BluetoothDevices";
 
         // Find and set up the ListView for newly discovered devices
         newDevicesListView = (ListView)findViewById(R.id.new_devices);
+        newDevicesListView.setAdapter(newDevicesArrayAdapter);
         newDevicesListView.setOnItemClickListener(deviceClickListener);
 
         // Get the local Bluetooth adapter and set of currently paired devices
@@ -218,6 +219,8 @@ private static final String TAG = "BluetoothDevices";
             }
         }
     };
+
+
     private class ConnectBT extends AsyncTask<Void, Void, Void>  // UI thread
     {
         private boolean ConnectSuccess = true; //if it's here, it's almost connected
