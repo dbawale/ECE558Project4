@@ -4,4 +4,5 @@
     <string name="title_other_devices">Available Devices</string>
     <string name="bluetooth_not_supported">Bluetooth is not supported on this device</string>
     <string name="bluetooth_cannot_use_without">Cannot use this application without Bluetooth</string>
+    <string name="bluetooth_connect">Connect</string>
 </resources>

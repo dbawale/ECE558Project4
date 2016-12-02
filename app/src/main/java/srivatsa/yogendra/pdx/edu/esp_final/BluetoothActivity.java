@@ -171,13 +171,13 @@ private static final String TAG = "BluetoothDevices";
             String info = ((TextView)v).getText().toString();
             address = info.substring(info.length() - 17);
             // Create the result Intent and include the MAC address
-            Intent control_activity_intent = new Intent(BluetoothActivity.this, ControlActivity.class);
+            Intent control_activity_intent = new Intent();
             control_activity_intent.putExtra("Address_device",address);
-            startActivity(control_activity_intent);
+//            startActivity(control_activity_intent);
 
             // Set result and finish this Activity
             setResult(Activity.RESULT_OK, control_activity_intent);
-            //finish();
+            finish();
         }
     };
 
