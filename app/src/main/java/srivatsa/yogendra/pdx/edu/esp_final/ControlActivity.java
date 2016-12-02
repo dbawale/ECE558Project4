@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -42,14 +41,16 @@ public class ControlActivity extends AppCompatActivity {
         randomizebtn = (Button) findViewById(R.id.randomizebtn);
         clearbtn = (Button) findViewById(R.id.clearbtn);
         Intent control_activity_intent = getIntent();
-        address = control_activity_intent.getStringExtra("Bluetooth_Address");
-        myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
-        BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
-        try {
-            btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
-        } catch (IOException e) {
-            Log.d("socket","Socket not connected");
-        }
+        address = control_activity_intent.getStringExtra("Address_device");
+        new ConnectBT().execute();
+
+//        myBluetooth = BluetoothAdapter.getDefaultAdapter();//get the mobile bluetooth device
+//        BluetoothDevice dispositivo = myBluetooth.getRemoteDevice(address);//connects to the device's address and checks if it's available
+//        try {
+//            btSocket = dispositivo.createInsecureRfcommSocketToServiceRecord(myUUID);//create a RFCOMM (SPP) connection
+//        } catch (IOException e) {
+//            Log.d("socket","Socket not connected");
+//        }
 
         sendbtn.setOnClickListener(new View.OnClickListener() {
             @Override
