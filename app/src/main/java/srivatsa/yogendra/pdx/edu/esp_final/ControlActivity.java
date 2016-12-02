@@ -17,6 +17,13 @@ import java.io.IOException;
 import java.util.Random;
 import java.util.UUID;
 
+
+//TODO: Fix bugs
+//TODO: What happens when user exits app?
+//TODO: What happens when user tries to reconnect to already connected device?
+//TODO: What happens when user turns off bluetooth when it's connected?
+//TODO: What happens if the board turns off?
+
 public class ControlActivity extends AppCompatActivity {
 
     String address = null;
@@ -26,7 +33,7 @@ public class ControlActivity extends AppCompatActivity {
     private boolean isBtConnected = false;
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     EditText text1;
-    Button sendbtn,generatebtn,clearbtn,randomizebtn, BTConnectbtn;
+    Button sendbtn,clearbtn, BTConnectbtn;
     private final int REQUEST_CODE_CONNECT = 1;
 
     @Override
