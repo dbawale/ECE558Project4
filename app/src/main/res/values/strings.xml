@@ -10,4 +10,5 @@
     <string name="amplitudeText">AMPLITUDE</string>
     <string name="durationText">DURATION</string>
     <string name="thresholdText">THRESHOLD</string>
+    <string name="bluetooth_connect">Connect</string>
 </resources>

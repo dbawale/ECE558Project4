@@ -8,42 +8,55 @@
     tools:context="srivatsa.yogendra.pdx.edu.esp_final.ControlActivity"
     android:orientation="vertical">
 
-    <EditText
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/bluetooth_connect"
+        android:id="@+id/BTConnect"
+        android:layout_gravity="center"/>
 
+    <EditText
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:hint="enter number"
         android:id="@+id/textbox1"
+        android:enabled="false"
         />
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:enabled="false"
         android:text="send"
         android:id="@+id/sndbtn"/>
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Generate"
-        android:id="@+id/generaterandombtn"
-        />
+
+    <!--<Button-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Generate"-->
+        <!--android:enabled="false"-->
+        <!--android:id="@+id/generaterandombtn"-->
+        <!--/>-->
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Clear"
+        android:enabled="false"
         android:id="@+id/clearbtn"
         />
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="RANDOMIZE!!"
-        android:id="@+id/randomizebtn"
-        />
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="STOP!!"
-        android:id="@+id/stopbtn"
-        />
+    <!--<Button-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="RANDOMIZE!!"-->
+        <!--android:enabled="false"-->
+        <!--android:id="@+id/randomizebtn"-->
+        <!--/>-->
+    <!--<Button-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:enabled="false"-->
+        <!--android:text="STOP!!"-->
+        <!--android:id="@+id/stopbtn"-->
+        <!--/>-->
 
 </LinearLayout>
