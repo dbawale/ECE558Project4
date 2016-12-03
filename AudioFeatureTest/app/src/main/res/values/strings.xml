@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">MUSICAL LIGHTS</string>
+    <string name="startButton">START</string>
+    <string name="stopButton">STOP</string>
+    <string name="pitchText">PITCH</string>
+    <string name="amplitudeText">AMPLITUDE</string>
+    <string name="durationText">DURATION</string>
+    <string name="thresholdText">THRESHOLD</string>
+</resources>
