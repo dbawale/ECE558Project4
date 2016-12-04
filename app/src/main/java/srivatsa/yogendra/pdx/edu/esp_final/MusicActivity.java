@@ -451,14 +451,31 @@ public class MusicActivity extends AppCompatActivity implements ConnectFragment.
             }
             else
             {
-                msg("Connected. Yay!!");
+                msg("Connected!");
                 isBtConnected = true;
                 SocketData socketData = SocketData.getInstance();
                 socketData.saveBluetoothSocketData(btSocket);
-                Intent mainactivityIntent = new Intent(MusicActivity.this,MusicActivity.class);
-                startActivity(mainactivityIntent);
+                //Load new fragment here
+//                Intent mainactivityIntent = new Intent(MusicActivity.this,MusicActivity.class);
+//                startActivity(mainactivityIntent);
             }
             progress.dismiss();
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent){
+        switch (requestCode){
+            case REQUEST_CODE_CONNECT:
+                if (resultCode == RESULT_OK){
+                    address = intent.getStringExtra("Address_device");
+                    new MusicActivity.ConnectBT().execute();
+                }
+                else {
+                    msg("Error Finding Device");
+                    finish();
+                }
+                break;
         }
     }
 

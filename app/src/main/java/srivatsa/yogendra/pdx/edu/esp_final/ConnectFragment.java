@@ -27,9 +27,12 @@ public class ConnectFragment extends Fragment implements Button.OnClickListener{
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-         View view = inflater.inflate(R.layout.fragment_connect, container, false);
-        //connectBtn = (Button)getView().findViewById(R.id.connectbtn);
+        View view = inflater.inflate(R.layout.fragment_connect, container, false);
+
+        //Find the only widget on this fragment: the connect button
         connectBtn = (Button)view.findViewById(R.id.connectbtn);
+
+        //Call the hosting activity's onConnectButtonPressed
         connectBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -40,16 +43,16 @@ public class ConnectFragment extends Fragment implements Button.OnClickListener{
         return view;
     }
 
-//    // TODO: Rename method, update argument and hook method into UI event
-//    public void onButtonPressed(Uri uri) {
-//        if (mListener != null) {
-//            mListener.onConnectButtonPressed(uri);
-//        }
-//    }
-
+    /**
+     * The onAttach event for the fragment.
+     * Called when the fragment attaches
+     * @param context The context of the fragment
+     */
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+
+        //Throw an exception if the hosting activity doesn't implement the interface
         if (context instanceof OnConnectButtonPressedListener) {
             mListener = (OnConnectButtonPressedListener) context;
         } else {
@@ -58,15 +61,23 @@ public class ConnectFragment extends Fragment implements Button.OnClickListener{
         }
     }
 
+    /**
+     * Called when the fragment detaches from the activity
+     */
     @Override
     public void onDetach() {
         super.onDetach();
         mListener = null;
     }
 
-
+    /**
+     * The onClick method
+     * @param view
+     */
     @Override
     public void onClick(View view) {
+        //If the clicked button is the connect button, then call the onConnectButtonPressed
+        //function on hosting activity
         if(view.getId()==R.id.connectbtn){
             OnConnectButtonPressedListener listener = (OnConnectButtonPressedListener)getActivity();
             listener.onConnectButtonPressed();
@@ -74,14 +85,8 @@ public class ConnectFragment extends Fragment implements Button.OnClickListener{
     }
 
     /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     * <p>
-     * See the Android Training lesson <a href=
-     * "http://developer.android.com/training/basics/fragments/communicating.html"
-     * >Communicating with Other Fragments</a> for more information.
+     * OnConnectButtonPressedListener should be implemented by any activity that hosts
+     * ConnectFragment
      */
     public interface OnConnectButtonPressedListener {
         void onConnectButtonPressed();
