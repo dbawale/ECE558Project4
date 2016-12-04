@@ -1,5 +1,7 @@
 package srivatsa.yogendra.pdx.edu.esp_final;
 
+import android.bluetooth.BluetoothServerSocket;
+import android.bluetooth.BluetoothSocket;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -7,6 +9,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 
@@ -17,9 +20,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Random;
 
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.AudioEvent;
@@ -35,9 +40,10 @@ public class MainActivity extends AppCompatActivity {
     private int size = 512;
     private int sampleRate = 24000;
     private AudioDispatcher dispatcher;
-    private Thread thread;
+    private Thread thread, threadData;
     private double duration;
     private ArrayList<Double> amplitudeBuffer;
+    private double dbLevel;
 
     private Button startButton;
     private Button stopButton;
@@ -53,11 +59,16 @@ public class MainActivity extends AppCompatActivity {
 
 
     //Threshold Constants
-    private static final int MIN_THRESHOLD = 0;
-    private static final int MAX_THRESHOLD = 1;
+    private static final int MIN = 0;
+    private static final int AVG_MIN = 1;
     private static final int AVG_THRESHOLD = 2;
-    private double[] threshold = new double[3];
+    private static final int AVG_MAX = 3;
+    private static final int MAX = 4;
 
+    private static final int[] intensityRange = {0,64,128,192,255};
+    private double[] threshold = new double[5];
+
+    private BluetoothSocket bluetoothSocket;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
                 // do this calculation in a thread
 
                 thread = new Thread(dispatcher,"Audio Dispatcher");
+                //threadData = new Thread(new transmitData());
                 thread.start();
 
             }
@@ -96,8 +108,12 @@ public class MainActivity extends AppCompatActivity {
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+               // threadData.start();
                 thread.interrupt();
                 thread = null;
+             //   threadData.interrupt();
+             //   threadData = null;
                 startButton.setEnabled(true);
                 stopButton.setEnabled(false);
                 try{
@@ -124,19 +140,27 @@ public class MainActivity extends AppCompatActivity {
         this.threshold[index] = thresholdValue;
     }
 
+    public double getDbLevel() {
+        return dbLevel;
+    }
+
+    public void setDbLevel(double dbLevel) {
+        this.dbLevel = dbLevel;
+    }
 
     /**
      *
      */
     public void initialize()
     {
+        bluetoothSocket = SocketData.getBluetoothSocketData();
+
         startButton = (Button) findViewById(R.id.startButton);
         stopButton = (Button) findViewById(R.id.stopButton);
         pitchText = (TextView) findViewById(R.id.pitchTextView);
         amplitudeText = (TextView) findViewById(R.id.amplitudeTextView);
         durationText = (TextView) findViewById(R.id.durationTextView);
         thresholdText = (TextView) findViewById(R.id.thresholdTextView);
-
     }
 
     /**
@@ -154,65 +178,18 @@ public class MainActivity extends AppCompatActivity {
                 double pitchValue = pitchDetectionResult.getPitch();
                 Log.d("PITCH", String.valueOf(pitchValue));
                 double amplitudeValue = CalculateLoudness(audioEvent.getFloatBuffer(), audioEvent.getBufferSize());
-                double dbLevel = soundPressureLevel(audioEvent.getFloatBuffer());
-                calculateThreshold(dbLevel);
+                setDbLevel(soundPressureLevel(audioEvent.getFloatBuffer()));
+                calculateThreshold(getDbLevel());
                 Log.d("AMPLITUDE", String.valueOf(amplitudeValue));
-                Log.d("DECIBEL", String.valueOf(dbLevel));
+                Log.d("DECIBEL", String.valueOf(getDbLevel()));
                 display(pitchValue, amplitudeValue);
+                threadData = new Thread(new transmitData());
+                threadData.start();
+
             }
         }));
 
         Log.d("THRESHOLD", String.valueOf(getThreshold(AVG_THRESHOLD)));
-    }
-
-    private double soundPressureLevel(final float[] buffer) {
-        double power = 0.0D;
-        for (float element : buffer) {
-            power += element * element;
-        }
-        double value = Math.pow(power, 0.5)/ buffer.length;;
-        return 20.0 * Math.log10(value);
-    }
-
-    private void calculateThreshold(double dbValue) {
-        double secondsProcessed = Math.abs(dispatcher.secondsProcessed());
-
-        /* Use the first 10sec of audio stream as training data for the microphone.
-         * Using this data set the threshold values for colors to be displayed.
-         */
-        if((secondsProcessed <= 2))
-            amplitudeBuffer.add(dbValue);
-        else if((secondsProcessed<2.20) && ((secondsProcessed%2 >= 0) && (secondsProcessed%2 < 0.05)))
-            setThreshold();
-//
-//        if((secondsProcessed%30 >= 0) && (secondsProcessed%30 < 0.05))
-//        {
-//
-//            // Reset the threshold.
-//            // use the next 10sec as training data.
-//        }
-    }
-
-    /**
-     * Calculate the minimum, maximum, average value of the amplitude for a period of 10sec
-     */
-    private void setThreshold() {
-        double min = Double.MAX_VALUE;
-        double max = Double.MIN_VALUE;
-        double avg = 0.0;
-
-        for(int i=0; i<amplitudeBuffer.size(); i++) {
-            if(min > amplitudeBuffer.get(i))
-                min = amplitudeBuffer.get(i);
-            if(max < amplitudeBuffer.get(i))
-                max = amplitudeBuffer.get(i);
-            avg += amplitudeBuffer.get(i);
-        }
-
-        setThreshold(min, MIN_THRESHOLD);
-        setThreshold(max, MAX_THRESHOLD);
-        setThreshold(avg, AVG_THRESHOLD);
-        amplitudeBuffer.clear();
     }
 
     /**
@@ -228,6 +205,64 @@ public class MainActivity extends AppCompatActivity {
             sumLevel += buffer[i]*1000000;
         }
         return Math.abs(sumLevel/bufferSize);
+    }
+
+
+    private double soundPressureLevel(final float[] buffer) {
+        double power = 0.0D;
+        for (float element : buffer) {
+            power += element * element;
+        }
+        double value = Math.pow(power, 0.5)/ buffer.length;;
+        // Taking the absolute value of decibel value. The actual value is negative.
+        return Math.abs(20.0 * Math.log10(value));
+
+    }
+
+    private void calculateThreshold(double dbValue) {
+        double secondsProcessed = Math.abs(dispatcher.secondsProcessed());
+
+        /* Use the first 2sec of audio stream as training data for the microphone.
+         * Using this data set the threshold values for colors to be displayed.
+         */
+        if((secondsProcessed <= 2))
+            amplitudeBuffer.add(dbValue);
+        else if((secondsProcessed<2.20) && ((secondsProcessed%2 >= 0) && (secondsProcessed%2 < 0.05))) {
+            calculateRanges();
+        }
+    }
+
+    /**
+     * Inorder to standardize the decibel values as perceived by different microphones,
+     * Calculate the minimum, maximum, average value of the amplitude for a period of 2sec.
+     * i.e. Train the application for the device's microphone
+     */
+    private void calculateRanges() {
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+        double avg = 0.0;
+
+        for(int i=0; i<amplitudeBuffer.size(); i++) {
+            if(min > amplitudeBuffer.get(i))
+                min = amplitudeBuffer.get(i);
+            if(max < amplitudeBuffer.get(i))
+                max = amplitudeBuffer.get(i);
+            avg += amplitudeBuffer.get(i);
+            Log.d("AMPLITUDE BUFFER", String.valueOf(amplitudeBuffer.get(i)));
+        }
+        avg = avg/amplitudeBuffer.size();
+
+        /*
+         * Since the actual dB value obtained is negative but for calculation purpose, its
+         * absolute value is considered, while making a note of the minimum, avg and maximum values
+         * reverse the order.
+         * i.e. 40 > 60
+         */
+        setThreshold(max, MIN);
+        setThreshold(min, MAX);
+        setThreshold(avg, AVG_THRESHOLD);
+        setThreshold((avg+min)/2, AVG_MAX);
+        setThreshold((avg+max)/2, AVG_MIN);
     }
 
     /**
@@ -247,7 +282,112 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private class transmitData implements Runnable{
+        public void run() {
+            try {
+                threadData.sleep(10);
+//                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            String data;
+            /* 180 data sets have to generated
+             * 60 LEDs and 3 values for each LED : RGB
+             * Hence, 180 = 60*3
+             */
+            RandomNumberArray arr = new RandomNumberArray(180);
 
+            /*
+             * Values above 70 are silent values. For silence range, transmit  data
+             * decibel Number line is:       |---------|---------|-------|---------|
+             *                              MAX     AVG_MAX     AVG   AVG_MIN   MIN
+             * the intensity Number Line is: |---------|---------|-------|---------|
+             *                              MIN     AVG_MIN     AVG   AVG_MAX   MAX
+             *                               |--range1-|------range2-----|--range3-|
+             *
+             */
+//            if (getDbLevel() > getThreshold(AVG_MIN) && getDbLevel() < 70) {
+//                arr.generateArray(new Random().nextInt(3), intensityRange[MAX],intensityRange[AVG_MAX]);
+//            }
+//            else if (getDbLevel() > getThreshold(AVG_MAX) && getDbLevel() < getThreshold(AVG_MIN)) {
+//                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MAX],intensityRange[AVG_MIN]);
+//            }
+//            else if (getDbLevel() > getThreshold(MAX) && getDbLevel() < getThreshold(AVG_MAX)) {
+//                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MIN],intensityRange[MIN]);
+//            }
+//            else if(getDbLevel() >= 70) {
+//                arr.generateArray(0, -1, 0);
+//            }
+
+            if(getDbLevel() > getThreshold(AVG_MAX) && getDbLevel() < 70){
+                arr.generateArray(new Random().nextInt(3),intensityRange[MAX],intensityRange[AVG_MAX]);
+            }
+            else{
+                arr.generateClearArray();
+            }
+
+
+
+            if (bluetoothSocket != null) {
+                try {
+                    data = arr.toString();
+                    bluetoothSocket.getOutputStream().write(data.getBytes());
+                } catch (IOException e) {
+                    msg("Error");
+                }
+            }
+        }
+    }
+
+    // fast way to call Toast
+    private void msg(String s)
+    {
+        Toast.makeText(getApplicationContext(),s,Toast.LENGTH_SHORT).show();
+    }
+
+
+    private class RandomNumberArray{
+        private int mNumberOfRandomNumbers;
+        private int[] mArrayOfRandomNumbers;
+        Random random;
+        public RandomNumberArray(int numberOfRandomNumbers){
+            mNumberOfRandomNumbers = numberOfRandomNumbers;
+            mArrayOfRandomNumbers = new int[numberOfRandomNumbers];
+            random = new Random();
+        }
+
+        /**
+         * Generate an array of color having different intensity in the range of
+         * supplied min to max value.
+         * @param color - Color for which the dataset is to be generated
+         * @param max - Maximum color intensity
+         * @param min - Minimum color intensity
+         */
+        public void generateArray(int color, int max, int min){
+            for(int i=color;i<mNumberOfRandomNumbers;i+=3){
+                mArrayOfRandomNumbers[i] = random.nextInt(max-min+1)+min;
+            }
+        }
+        public void generateClearArray(){
+            for(int i=0;i<mNumberOfRandomNumbers;i++){
+                mArrayOfRandomNumbers[i] = 0;
+            }
+        }
+        @Override
+        public String toString(){
+            StringBuilder sb = new StringBuilder();
+            for(int i=0;i<mNumberOfRandomNumbers;i++){
+                sb.append(mArrayOfRandomNumbers[i]);
+                if(i!=mNumberOfRandomNumbers-1) {
+                    sb.append(",");
+                }
+                else{
+                    sb.append("\n");
+                }
+            }
+            return sb.toString();
+        }
+    }
 
 }
 

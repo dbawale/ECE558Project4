@@ -135,6 +135,7 @@ public class ControlActivity extends AppCompatActivity {
                     {
                         String data = String.valueOf(text1.getText());
                         btSocket.getOutputStream().write(data.getBytes());
+
                     }
                     catch (IOException e)
                     {
@@ -191,6 +192,10 @@ public class ControlActivity extends AppCompatActivity {
             {
                 msg("Connected. Yay!!");
                 isBtConnected = true;
+                SocketData socketData = SocketData.getInstance();
+                socketData.saveBluetoothSocketData(btSocket);
+                Intent mainactivityIntent = new Intent(ControlActivity.this,MainActivity.class);
+                startActivity(mainactivityIntent);
             }
             progress.dismiss();
         }
