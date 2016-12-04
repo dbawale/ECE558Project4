@@ -11,4 +11,7 @@
     <string name="durationText">DURATION</string>
     <string name="thresholdText">THRESHOLD</string>
     <string name="bluetooth_connect">Connect</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

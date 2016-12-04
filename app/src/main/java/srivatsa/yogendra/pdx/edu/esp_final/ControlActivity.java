@@ -194,7 +194,7 @@ public class ControlActivity extends AppCompatActivity {
                 isBtConnected = true;
                 SocketData socketData = SocketData.getInstance();
                 socketData.saveBluetoothSocketData(btSocket);
-                Intent mainactivityIntent = new Intent(ControlActivity.this,MainActivity.class);
+                Intent mainactivityIntent = new Intent(ControlActivity.this,MusicActivity.class);
                 startActivity(mainactivityIntent);
             }
             progress.dismiss();
