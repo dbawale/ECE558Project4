@@ -35,7 +35,7 @@ import be.tarsos.dsp.pitch.PitchProcessor;
 
 public class MainActivity extends AppCompatActivity {
 
-    //private float pitchValue;
+    private double pitchValue;
     //private double amplitudeValue;
     private int bufferSize = 1024;
     private int overflowBufferSize = bufferSize/2;
@@ -44,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private Thread threadMusic, threadData;
     private double duration;
     private ArrayList<Double> amplitudeBuffer;
+    private ArrayList<Double> pitchBuffer;
     private double dbLevel;
     private TransmitData transmitData;
 
@@ -76,6 +77,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int[] intensityRange = {0,64,128,192,255};
     private double[] threshold = new double[5];
+    private double[] pitchThreshold = new double[5];
+    private static final int[] sleepRange = {50,87,125,162,200};
 
     private BluetoothSocket bluetoothSocket;
 
@@ -97,6 +100,7 @@ public class MainActivity extends AppCompatActivity {
                 startButton.setEnabled(false);
                 stopButton.setEnabled(true);
                 amplitudeBuffer = new ArrayList<Double>();
+                pitchBuffer = new ArrayList<Double>();
 
                 //Initialize audio dispatcher to listen from microphone
                 dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,bufferSize,overflowBufferSize);
@@ -187,6 +191,22 @@ public class MainActivity extends AppCompatActivity {
         this.dbLevel = dbLevel;
     }
 
+    public double getPitchValue() {
+        return pitchValue;
+    }
+
+    public void setPitchValue(double pitchValue) {
+        this.pitchValue = pitchValue;
+    }
+
+    public double getPitchThreshold(int index) {
+        return pitchThreshold[index];
+    }
+
+    public void setPitchThreshold(double pitchThreshold, int index) {
+        this.pitchThreshold[index] = pitchThreshold;
+    }
+
     /**
      * Initialize the widgets used in the activity/fragment
      */
@@ -214,7 +234,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void handlePitch(PitchDetectionResult pitchDetectionResult,
                                     AudioEvent audioEvent) {
-//                double pitchValue = pitchDetectionResult.getPitch();
+                 setPitchValue(pitchDetectionResult.getPitch());
 //                Log.d("PITCH", String.valueOf(pitchValue));
 //                double amplitudeValue = CalculateLoudness(audioEvent.getFloatBuffer(), audioEvent.getBufferSize());
 
@@ -223,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
                 setDbLevel(soundPressureLevel(audioEvent.getFloatBuffer()));
 
                 // Train the microphone to figure out the decibel ranges only for the initial 2 sec
-                calculateThreshold(getDbLevel());
+                calculateThreshold(getDbLevel(), getPitchValue());
 //                Log.d("AMPLITUDE", String.valueOf(amplitudeValue));
              //   Log.d("DECIBEL", String.valueOf(getDbLevel()));
 //                display(pitchValue, amplitudeValue);
@@ -235,6 +255,7 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("THRESHOLD", String.valueOf(getThreshold(AVG)));
     }
+
 
 //    /**
 //     *
@@ -272,16 +293,19 @@ public class MainActivity extends AppCompatActivity {
      * Based on these range decide the threshold level for calibrating the microphone
      * @param dbValue - decibel level as calculated.
      */
-    private void calculateThreshold(double dbValue) {
+    private void calculateThreshold(double dbValue, double pitchValue) {
         double secondsProcessed = Math.abs(dispatcher.secondsProcessed());
 
         /* Use the first 2sec of audio stream as training data for the microphone.
          * Using this data set the threshold values for colors to be displayed.
          */
-        if((secondsProcessed <= 2))
+        if((secondsProcessed <= 2)) {
             amplitudeBuffer.add(dbValue);
+            pitchBuffer.add(pitchValue);
+        }
         else if((secondsProcessed<2.20) && ((secondsProcessed%2 >= 0) && (secondsProcessed%2 < 0.05))) {
             calculateRanges();  // Calculate the range for which the decibel level spans.
+            calculatePitchRanges();
         }
     }
 
@@ -301,7 +325,6 @@ public class MainActivity extends AppCompatActivity {
             if(max < amplitudeBuffer.get(i))
                 max = amplitudeBuffer.get(i);
             avg += amplitudeBuffer.get(i);
-         //   Log.d("AMPLITUDE BUFFER", String.valueOf(amplitudeBuffer.get(i)));
         }
         avg = avg/amplitudeBuffer.size();
 
@@ -321,7 +344,37 @@ public class MainActivity extends AppCompatActivity {
         Log.d("Avg_max", String.valueOf((avg+min)/2));
         setThreshold((avg+max)/2, AVG_MIN);
         Log.d("Avg_min", String.valueOf((avg+max)/2));
+
+
     }
+
+    private void calculatePitchRanges()
+    {
+        double min = Double.MAX_VALUE;
+        double max = Double.MIN_VALUE;
+        double avg = 0.0;
+
+        for(int i=0; i<pitchBuffer.size(); i++) {
+            if(min > pitchBuffer.get(i))
+                min = pitchBuffer.get(i);
+            if(max < pitchBuffer.get(i))
+                max = pitchBuffer.get(i);
+            avg += pitchBuffer.get(i);
+        }
+        avg = avg/pitchBuffer.size();
+
+        setPitchThreshold(max, MAX);
+        Log.d("max", String.valueOf(max));
+        setPitchThreshold(min, MIN);
+        Log.d("min", String.valueOf(min));
+        setPitchThreshold(avg, AVG);
+        Log.d("Avg", String.valueOf(avg));
+        setPitchThreshold((avg+min)/2, AVG_MIN);
+        Log.d("Avg_min", String.valueOf((avg+min)/2));
+        setPitchThreshold((avg+max)/2, AVG_MAX);
+        Log.d("Avg_max", String.valueOf((avg+max)/2));
+    }
+
 
     /**
      * Display data on UI in a UI thread.
@@ -396,7 +449,10 @@ public class MainActivity extends AppCompatActivity {
                         String data = generateColorData(isMusic()).toString();
                        // Log.d("BT", "Sending data" + data);
                         bluetoothSocket.getOutputStream().write(data.getBytes());
-                        Thread.sleep(50);
+//                        int pitchThresholdValue = generatePitchData(pitchValue);
+
+                        Thread.sleep(generatePitchData(pitchValue));
+
 //                        data = generateColorData(false).toString();
 //                        bluetoothSocket.getOutputStream().write(data.getBytes());
                     } catch (IOException e) {
@@ -408,6 +464,19 @@ public class MainActivity extends AppCompatActivity {
             }
 //            msg("Either Stopped listening to Music or Bluetooth disconnected");
         }
+    }
+
+    private int generatePitchData(double pitchValue) {
+
+        if (pitchValue < getPitchThreshold(MIN))
+            return sleepRange[MAX];
+        else if (pitchValue > getPitchThreshold(MIN) && pitchValue < getPitchThreshold(AVG_MIN))
+            return new Random().nextInt(sleepRange[MAX]-sleepRange[AVG_MAX]+1)+sleepRange[AVG_MAX];
+        else if (pitchValue > getPitchThreshold(AVG_MIN) && pitchValue < getPitchThreshold(AVG_MAX))
+            return new Random().nextInt(sleepRange[AVG_MAX]-sleepRange[AVG_MIN]+1)+sleepRange[AVG_MIN];
+        else if (pitchValue > getPitchThreshold(AVG_MAX) && pitchValue < getPitchThreshold(MAX))
+            return new Random().nextInt(sleepRange[AVG_MIN]-sleepRange[MIN]+1)+sleepRange[MIN];
+        return sleepRange[MIN];
     }
 
     /**
