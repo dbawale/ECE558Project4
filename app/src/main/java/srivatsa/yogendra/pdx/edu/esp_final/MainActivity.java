@@ -37,19 +37,21 @@ public class MainActivity extends AppCompatActivity {
 
     //private float pitchValue;
     //private double amplitudeValue;
-    private int size = 512;
+    private int bufferSize = 1024;
+    private int overflowBufferSize = bufferSize/2;
     private int sampleRate = 24000;
     private AudioDispatcher dispatcher;
-    private Thread thread, threadData;
+    private Thread threadMusic, threadData;
     private double duration;
     private ArrayList<Double> amplitudeBuffer;
     private double dbLevel;
+    private TransmitData transmitData;
 
     private Button startButton;
     private Button stopButton;
-    private TextView pitchText;
-    private TextView amplitudeText;
-    private TextView durationText;
+//    private TextView pitchText;
+//    private TextView amplitudeText;
+//    private TextView durationText;
     private TextView thresholdText;
 
 
@@ -61,9 +63,16 @@ public class MainActivity extends AppCompatActivity {
     //Threshold Constants
     private static final int MIN = 0;
     private static final int AVG_MIN = 1;
-    private static final int AVG_THRESHOLD = 2;
+    private static final int AVG = 2;
     private static final int AVG_MAX = 3;
     private static final int MAX = 4;
+
+    //RGB Constants
+    private static final int RED = 0;
+    private static final int GREEN = 1;
+    private static final int BLUE = 2;
+
+
 
     private static final int[] intensityRange = {0,64,128,192,255};
     private double[] threshold = new double[5];
@@ -79,6 +88,8 @@ public class MainActivity extends AppCompatActivity {
 
         /*
          * Set on click listener for start listening to music
+         * Keep listening to the music and process the audio in thread 'threadMusic'
+         * Transmit data over bluetooth in a separate thread 'threadData'
          */
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -86,19 +97,21 @@ public class MainActivity extends AppCompatActivity {
                 startButton.setEnabled(false);
                 stopButton.setEnabled(true);
                 amplitudeBuffer = new ArrayList<Double>();
+
                 //Initialize audio dispatcher to listen from microphone
-                dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,1024,size);
+                dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,bufferSize,overflowBufferSize);
+                transmitData = new TransmitData(true);   // initialize data transmission object
 
-                // Calculate the pitch and loudness in the detected audio stream
-                //CalculatePitchLoudness(dispatcher);
-                CalculatePitchLoudness();
+                // Calculate the decibel level in the detected audio stream
+                CalculateDecibel();
 
-                // do this calculation in a thread
-
-                thread = new Thread(dispatcher,"Audio Dispatcher");
-                //threadData = new Thread(new transmitData());
-                thread.start();
-
+                // Keep listening to music and calculate the decibel level for data captured in buffer
+                threadMusic = new Thread(dispatcher,"Audio Dispatcher");
+                // Keep polling 'dbLevel' to transmit appropriate color as per the decibel value
+                threadData = new Thread(transmitData, "Color Transmition");
+                threadMusic.start();
+                threadData.start();
+                Log.d("threads","Threads started");
             }
         });
 
@@ -109,18 +122,28 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-               // threadData.start();
-                thread.interrupt();
-                thread = null;
-             //   threadData.interrupt();
-             //   threadData = null;
                 startButton.setEnabled(true);
                 stopButton.setEnabled(false);
+
+                transmitData.setMusic(false);   // send a clear data to stop the effects of musical lights
+                try {
+                    threadData.join();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                threadMusic.interrupt();
+                threadMusic = null;
+//                threadData.interrupt();
+                threadData = null;
+
+                // Nullify music listener and data transmission objects
                 try{
                     if(dispatcher!=null)
                     {
                         dispatcher.stop();
                     }
+
+                    transmitData = null;
                 }
                 catch (Exception e) {
                     e.printStackTrace();
@@ -130,26 +153,42 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    // Getters and Setters
 
+    /**
+     * Get the threshold value at the specified index
+     * @param index - index for the required threshold value
+     * @return - return the threshold value
+     */
     public double getThreshold(int index) {
         return this.threshold[index];
     }
 
+    /**
+     * Set the threshold value for the given index
+     * @param thresholdValue - threshold value to be set
+     * @param index - index at which this threshold has to be set
+     */
     public void setThreshold(double thresholdValue, int index) {
         this.threshold[index] = thresholdValue;
     }
 
+    /**
+     * @return - Return the decibel level calculated.
+     */
     public double getDbLevel() {
         return dbLevel;
     }
 
+    /**
+     *  Set the decibel level
+     * @param dbLevel
+     */
     public void setDbLevel(double dbLevel) {
         this.dbLevel = dbLevel;
     }
 
     /**
-     *
+     * Initialize the widgets used in the activity/fragment
      */
     public void initialize()
     {
@@ -157,68 +196,82 @@ public class MainActivity extends AppCompatActivity {
 
         startButton = (Button) findViewById(R.id.startButton);
         stopButton = (Button) findViewById(R.id.stopButton);
-        pitchText = (TextView) findViewById(R.id.pitchTextView);
-        amplitudeText = (TextView) findViewById(R.id.amplitudeTextView);
-        durationText = (TextView) findViewById(R.id.durationTextView);
+//        pitchText = (TextView) findViewById(R.id.pitchTextView);
+//        amplitudeText = (TextView) findViewById(R.id.amplitudeTextView);
+//        durationText = (TextView) findViewById(R.id.durationTextView);
         thresholdText = (TextView) findViewById(R.id.thresholdTextView);
     }
 
     /**
-     *
+     * Read the data from the audio stream and calculate the decibel level.
      *
      */
-    public void CalculatePitchLoudness()
+    public void CalculateDecibel()
     {
 
-        dispatcher.addAudioProcessor(new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.FFT_YIN, 22050, size*2, new PitchDetectionHandler() {
+        dispatcher.addAudioProcessor(new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.FFT_YIN, 22050, bufferSize, new PitchDetectionHandler() {
 
             @Override
             public void handlePitch(PitchDetectionResult pitchDetectionResult,
                                     AudioEvent audioEvent) {
-                double pitchValue = pitchDetectionResult.getPitch();
-                Log.d("PITCH", String.valueOf(pitchValue));
-                double amplitudeValue = CalculateLoudness(audioEvent.getFloatBuffer(), audioEvent.getBufferSize());
-                setDbLevel(soundPressureLevel(audioEvent.getFloatBuffer()));
-                calculateThreshold(getDbLevel());
-                Log.d("AMPLITUDE", String.valueOf(amplitudeValue));
-                Log.d("DECIBEL", String.valueOf(getDbLevel()));
-                display(pitchValue, amplitudeValue);
-                threadData = new Thread(new transmitData());
-                threadData.start();
+//                double pitchValue = pitchDetectionResult.getPitch();
+//                Log.d("PITCH", String.valueOf(pitchValue));
+//                double amplitudeValue = CalculateLoudness(audioEvent.getFloatBuffer(), audioEvent.getBufferSize());
 
+                // For the amplitude data collected by the audio event in the buffer, calculate
+                // the corresponding decibel level for each amplitude.
+                setDbLevel(soundPressureLevel(audioEvent.getFloatBuffer()));
+
+                // Train the microphone to figure out the decibel ranges only for the initial 2 sec
+                calculateThreshold(getDbLevel());
+//                Log.d("AMPLITUDE", String.valueOf(amplitudeValue));
+             //   Log.d("DECIBEL", String.valueOf(getDbLevel()));
+//                display(pitchValue, amplitudeValue);
+
+                // display data on UI
+                display();
             }
         }));
 
-        Log.d("THRESHOLD", String.valueOf(getThreshold(AVG_THRESHOLD)));
+        Log.d("THRESHOLD", String.valueOf(getThreshold(AVG)));
     }
+
+//    /**
+//     *
+//     * @param buffer
+//     * @param bufferSize
+//     * @return
+//     */
+//    private double CalculateLoudness(float[] buffer, int bufferSize)
+//    {
+//        double sumLevel = 0.0;
+//        for (int i = 0; i < bufferSize; i++) {
+//            sumLevel += buffer[i]*1000000;
+//        }
+//        return Math.abs(sumLevel/bufferSize);
+//    }
 
     /**
-     *
-     * @param buffer
-     * @param bufferSize
-     * @return
+     *  Calculates the decibel level for the amplitude data collected the buffer.
+     * @param buffer - data collected by audio Event
+     * @return - returns absolute decibel level for the collected data in the buffer.
      */
-    private double CalculateLoudness(float[] buffer, int bufferSize)
-    {
-        double sumLevel = 0.0;
-        for (int i = 0; i < bufferSize; i++) {
-            sumLevel += buffer[i]*1000000;
-        }
-        return Math.abs(sumLevel/bufferSize);
-    }
-
-
     private double soundPressureLevel(final float[] buffer) {
         double power = 0.0D;
         for (float element : buffer) {
             power += element * element;
         }
-        double value = Math.pow(power, 0.5)/ buffer.length;;
+        double value = Math.pow(power, 0.5)/ buffer.length;
         // Taking the absolute value of decibel value. The actual value is negative.
         return Math.abs(20.0 * Math.log10(value));
 
     }
 
+    /**
+     * Calculate the ranges of decibel levels as found during the training session
+     * Based on these range decide the threshold level for calibrating the microphone
+     * @param dbValue - decibel level as calculated.
+     */
     private void calculateThreshold(double dbValue) {
         double secondsProcessed = Math.abs(dispatcher.secondsProcessed());
 
@@ -228,14 +281,14 @@ public class MainActivity extends AppCompatActivity {
         if((secondsProcessed <= 2))
             amplitudeBuffer.add(dbValue);
         else if((secondsProcessed<2.20) && ((secondsProcessed%2 >= 0) && (secondsProcessed%2 < 0.05))) {
-            calculateRanges();
+            calculateRanges();  // Calculate the range for which the decibel level spans.
         }
     }
 
     /**
      * Inorder to standardize the decibel values as perceived by different microphones,
      * Calculate the minimum, maximum, average value of the amplitude for a period of 2sec.
-     * i.e. Train the application for the device's microphone
+     * i.e. Calibrate the device's microphone for the music being played.
      */
     private void calculateRanges() {
         double min = Double.MAX_VALUE;
@@ -248,7 +301,7 @@ public class MainActivity extends AppCompatActivity {
             if(max < amplitudeBuffer.get(i))
                 max = amplitudeBuffer.get(i);
             avg += amplitudeBuffer.get(i);
-            Log.d("AMPLITUDE BUFFER", String.valueOf(amplitudeBuffer.get(i)));
+         //   Log.d("AMPLITUDE BUFFER", String.valueOf(amplitudeBuffer.get(i)));
         }
         avg = avg/amplitudeBuffer.size();
 
@@ -259,87 +312,164 @@ public class MainActivity extends AppCompatActivity {
          * i.e. 40 > 60
          */
         setThreshold(max, MIN);
+        Log.d("min", String.valueOf(max));
         setThreshold(min, MAX);
-        setThreshold(avg, AVG_THRESHOLD);
+        Log.d("max", String.valueOf(min));
+        setThreshold(avg, AVG);
+        Log.d("Avg", String.valueOf(avg));
         setThreshold((avg+min)/2, AVG_MAX);
+        Log.d("Avg_max", String.valueOf((avg+min)/2));
         setThreshold((avg+max)/2, AVG_MIN);
+        Log.d("Avg_min", String.valueOf((avg+max)/2));
     }
 
     /**
      * Display data on UI in a UI thread.
      */
-    private void display(final double pitchValue, final double amplitudeValue)
+//    private void display(final double pitchValue, final double amplitudeValue)
+    private void display()
     {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                pitchText.setText("" + pitchValue);
-                amplitudeText.setText("" + amplitudeValue);
-                durationText.setText(""+duration);
-                thresholdText.setText(""+getThreshold(AVG_THRESHOLD));
+//                pitchText.setText("" + pitchValue);
+//                amplitudeText.setText("" + amplitudeValue);
+//                durationText.setText(""+duration);
+                thresholdText.setText(String.valueOf(getThreshold(AVG)));
             }
         });
 
     }
 
-    private class transmitData implements Runnable{
+    /**
+     * Private class to transmit data over bluetooth
+     */
+    private class TransmitData implements Runnable{
+
+        private boolean music;
+
+        /**
+         * Parametrized constructor for the transmission class
+         * @param playMusic
+         */
+        public TransmitData(boolean playMusic)
+        {
+            this.music = playMusic;
+        }
+
+        /**
+         * Check if music is being played or not
+         * true - music is being played and the application is listening to it
+         * false - application not listening to music
+         * @return - boolean value whether application is listening to music or not
+         */
+        public boolean isMusic() {
+            return music;
+        }
+
+        /**
+         * Set whether the application is listening to music or not.
+         * true - application is listening to music
+         * false - application not listening to music
+         * @param music
+         */
+        public void setMusic(boolean music) {
+            this.music = music;
+        }
+
+        /**
+         * While bluetooth socket connection exists, keep generating color data for the
+         * decibel level value calculated and send it via bluetooth.
+         */
         public void run() {
-            try {
-                threadData.sleep(10);
-//                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            while (bluetoothSocket != null && stopButton.isEnabled()) {
+//                try {
+//                    // sleep for 100 ms before the next data is sent.
+//                    // This is to assist in showing flickering of lights
+//                    Thread.sleep(100);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                if (bluetoothSocket != null) {
+
+                    try {
+                        String data = generateColorData(isMusic()).toString();
+                       // Log.d("BT", "Sending data" + data);
+                        bluetoothSocket.getOutputStream().write(data.getBytes());
+                        Thread.sleep(50);
+//                        data = generateColorData(false).toString();
+//                        bluetoothSocket.getOutputStream().write(data.getBytes());
+                    } catch (IOException e) {
+                        msg("Error");
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+//                }
             }
-            String data;
-            /* 180 data sets have to generated
-             * 60 LEDs and 3 values for each LED : RGB
-             * Hence, 180 = 60*3
-             */
-            RandomNumberArray arr = new RandomNumberArray(180);
-
-            /*
-             * Values above 70 are silent values. For silence range, transmit  data
-             * decibel Number line is:       |---------|---------|-------|---------|
-             *                              MAX     AVG_MAX     AVG   AVG_MIN   MIN
-             * the intensity Number Line is: |---------|---------|-------|---------|
-             *                              MIN     AVG_MIN     AVG   AVG_MAX   MAX
-             *                               |--range1-|------range2-----|--range3-|
-             *
-             */
-//            if (getDbLevel() > getThreshold(AVG_MIN) && getDbLevel() < 70) {
-//                arr.generateArray(new Random().nextInt(3), intensityRange[MAX],intensityRange[AVG_MAX]);
-//            }
-//            else if (getDbLevel() > getThreshold(AVG_MAX) && getDbLevel() < getThreshold(AVG_MIN)) {
-//                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MAX],intensityRange[AVG_MIN]);
-//            }
-//            else if (getDbLevel() > getThreshold(MAX) && getDbLevel() < getThreshold(AVG_MAX)) {
-//                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MIN],intensityRange[MIN]);
-//            }
-//            else if(getDbLevel() >= 70) {
-//                arr.generateArray(0, -1, 0);
-//            }
-
-            if(getDbLevel() > getThreshold(AVG_MAX) && getDbLevel() < 70){
-                arr.generateArray(new Random().nextInt(3),intensityRange[MAX],intensityRange[AVG_MAX]);
-            }
-            else{
-                arr.generateClearArray();
-            }
-
-
-
-            if (bluetoothSocket != null) {
-                try {
-                    data = arr.toString();
-                    bluetoothSocket.getOutputStream().write(data.getBytes());
-                } catch (IOException e) {
-                    msg("Error");
-                }
-            }
+//            msg("Either Stopped listening to Music or Bluetooth disconnected");
         }
     }
 
-    // fast way to call Toast
+    /**
+     *
+     * @param playMusic
+     * @return
+     */
+    private RandomNumberArray generateColorData(boolean playMusic)
+    {
+        /* 3 data sets have to generated
+         * All 60 LEDs will have same RGB value
+         *
+         */
+        RandomNumberArray arr = new RandomNumberArray(3);
+
+        /*
+         * Generate data only if music is being played. => playMusic = true
+         * Values above 70 are silent values. For silence range, transmit  data
+         *  Eg: decibel:                 |---------|---------|-------|---------|
+         *                              70        62.5      55      47.5      40
+         * decibel Number line is:       |---------|---------|-------|---------|
+         *                              MIN     AVG_MIN     AVG   AVG_MAX     MAX
+         * the intensity Number Line is: |---------|---------|-------|---------|
+         *                              MIN     AVG_MIN     AVG   AVG_MAX   MAX
+         *                               |--range1-|------range2-----|--range3-|
+         *Eg intensity:                  |---------|---------|-------|---------|
+         *                               0        64        128     192       255
+         */
+        if (playMusic) {
+            if (getDbLevel() > getThreshold(MIN)){
+                arr.generateClearArray();
+                Log.d("min","im here");
+            }
+            else if(getDbLevel() < getThreshold(MIN) && getDbLevel() > getThreshold(AVG_MIN)){
+                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MIN], intensityRange[MIN]);
+                Log.d("avg_min - min","im here");
+            }
+            else if(getDbLevel() < getThreshold(AVG_MIN) && getDbLevel() > getThreshold(AVG_MAX)){
+                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MAX], intensityRange[AVG_MIN]);
+                Log.d("avg_max - avg_min","im here");
+            }
+            else if(getDbLevel() < getThreshold(AVG_MAX) && getDbLevel() > getThreshold(MAX)){
+                arr.generateArray(new Random().nextInt(3), intensityRange[MAX], intensityRange[AVG_MAX]);
+                Log.d("avg_max - max","im here");
+            }
+            else if(getDbLevel() < getThreshold(MAX)){
+                arr.generateArray(new Random().nextInt(3), intensityRange[MAX], intensityRange[MAX]);
+                Log.d("max","im here");
+            }
+        }
+        else    // Music is stopped, hence clear data.
+            arr.generateClearArray();
+
+//                if (getDbLevel() > getThreshold(AVG_MAX) && getDbLevel() < 70) {
+//                    arr.generateArray(new Random().nextInt(3), intensityRange[MAX], intensityRange[AVG_MAX]);
+//                } else {
+//                    arr.generateClearArray();
+//                }
+        return arr;
+    }
+
+    // display Toast
     private void msg(String s)
     {
         Toast.makeText(getApplicationContext(),s,Toast.LENGTH_SHORT).show();
@@ -350,6 +480,8 @@ public class MainActivity extends AppCompatActivity {
         private int mNumberOfRandomNumbers;
         private int[] mArrayOfRandomNumbers;
         Random random;
+
+
         public RandomNumberArray(int numberOfRandomNumbers){
             mNumberOfRandomNumbers = numberOfRandomNumbers;
             mArrayOfRandomNumbers = new int[numberOfRandomNumbers];
@@ -364,24 +496,26 @@ public class MainActivity extends AppCompatActivity {
          * @param min - Minimum color intensity
          */
         public void generateArray(int color, int max, int min){
-            for(int i=color;i<mNumberOfRandomNumbers;i+=3){
-                mArrayOfRandomNumbers[i] = random.nextInt(max-min+1)+min;
-            }
+//            for(int i=color;i<mNumberOfRandomNumbers;i+=3){
+                mArrayOfRandomNumbers[color] = random.nextInt(max-min+1)+min;
+//            }
         }
+
         public void generateClearArray(){
             for(int i=0;i<mNumberOfRandomNumbers;i++){
                 mArrayOfRandomNumbers[i] = 0;
             }
         }
+
         @Override
         public String toString(){
             StringBuilder sb = new StringBuilder();
             for(int i=0;i<mNumberOfRandomNumbers;i++){
-                sb.append(mArrayOfRandomNumbers[i]);
-                if(i!=mNumberOfRandomNumbers-1) {
-                    sb.append(",");
-                }
-                else{
+                sb.append(String.format("%03d",mArrayOfRandomNumbers[i]));
+//                if(i!=mNumberOfRandomNumbers-1) {
+//                    sb.append(",");
+//                }
+                if(i==mNumberOfRandomNumbers-1) {
                     sb.append("\n");
                 }
             }
@@ -390,33 +524,3 @@ public class MainActivity extends AppCompatActivity {
     }
 
 }
-
-
-/**
- * Extra code ignore
- */
-//                    count += 1;
-//                    sum += amplitudeValue;
-//                }while (count<10);
-
-//                duration = dispatcher.secondsProcessed();
-//                Log.d("DURATION", String.valueOf(duration));
-//                Log.d("COUNT", String.valueOf(count));
-//                avgAmplitude = sum/count;
-//                //Log.d("AVGAMPLITUDE", String.valueOf(amplitudeValue));
-//                sum = 0.0;
-//                count = 0;
-
-//                display();
-//                if(duration % (1/60) == 0) {
-//                if(count == 60) {
-//                    amplitudeValue = avgAmplitude/count;
-//                    Log.d("AVGAMPLITUDE", String.valueOf(amplitudeValue));
-//                    avgAmplitude = 0.0;
-//                    count = 0;
-//                    display();
-//                }
-//                else {
-//                    avgAmplitude += amplitudeValue;
-//                    count++;
-//                }
