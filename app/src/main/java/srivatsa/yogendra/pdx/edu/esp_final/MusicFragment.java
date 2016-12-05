@@ -18,10 +18,15 @@ public class MusicFragment extends Fragment {
     private OnMusicButtonPressedListener mListener;
     private Button startButton, stopButton;
     static LineGraphSeries<DataPoint> series;
+    static Boolean isStopEnabled;
    // private final Handler mHandler = new Handler();
     private Runnable mTimer;
     public MusicFragment() {
         // Required empty public constructor
+    }
+
+    public Boolean getStopEnabled(){
+        return isStopEnabled;
     }
 
     @Override
@@ -57,6 +62,7 @@ public class MusicFragment extends Fragment {
                 setStartEnabled();
                 OnMusicButtonPressedListener listener = (OnMusicButtonPressedListener) getActivity();
                 listener.onStopButtonPressed();
+
             }
         });
         return view;
@@ -81,12 +87,18 @@ public class MusicFragment extends Fragment {
     }
 
     public void setStartEnabled(){
-        startButton.setVisibility(View.VISIBLE);
         stopButton.setVisibility(View.INVISIBLE);
+        startButton.setVisibility(View.VISIBLE);
+        startButton.setEnabled(true);
+        stopButton.setEnabled(false);
+        isStopEnabled = false;
     }
 
     public void setStopEnabled(){
         startButton.setVisibility(View.INVISIBLE);
+        startButton.setEnabled(false);
+        stopButton.setEnabled(true);
+        isStopEnabled = true;
         stopButton.setVisibility(View.VISIBLE);
     }
 

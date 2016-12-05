@@ -5,14 +5,10 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -39,18 +35,12 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
     private int size = 512;
     private int sampleRate = 24000;
     private AudioDispatcher dispatcher;
-    private Thread thread, threadData;
+    private Thread thread, threadData, threadMusic;
     private double duration;
     private ArrayList<Double> amplitudeBuffer;
     private double dbLevel;
+    private TransmitData transmitData;
 
-    //User interface widgets
-    private Button startButton;
-    private Button stopButton;
-    private TextView pitchText;
-    private TextView amplitudeText;
-    private TextView durationText;
-    private TextView thresholdText;
 
 
     private double avgAmplitude = 0.0;
@@ -61,7 +51,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
     //Threshold Constants
     private static final int MIN = 0;
     private static final int AVG_MIN = 1;
-    private static final int AVG_THRESHOLD = 2;
+    private static final int AVG = 2;
     private static final int AVG_MAX = 3;
     private static final int MAX = 4;
 
@@ -77,6 +67,8 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
     private boolean isBtConnected = false;
     static final UUID myUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
     private final int REQUEST_CODE_CONNECT =1;
+
+    private  MusicFragment musicFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -107,8 +99,8 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
 //                dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,1024,size);
 //
 //                // Calculate the pitch and loudness in the detected audio stream
-//                //CalculatePitchLoudness(dispatcher);
-//                CalculatePitchLoudness();
+//                //CalculatePitchAndDecibel(dispatcher);
+//                CalculatePitchAndDecibel();
 //
 //                // do this calculation in a thread
 //
@@ -147,30 +139,46 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
 
     }
 
-    // Getters and Setters
-
+    /**
+     * Get the threshold value at the specified index
+     * @param index - index for the required threshold value
+     * @return - return the threshold value
+     */
     public double getThreshold(int index) {
         return this.threshold[index];
     }
 
+    /**
+     * Set the threshold value for the given index
+     * @param thresholdValue - threshold value to be set
+     * @param index - index at which this threshold has to be set
+     */
     public void setThreshold(double thresholdValue, int index) {
         this.threshold[index] = thresholdValue;
     }
 
+    /**
+     * @return - Return the decibel level calculated.
+     */
     public double getDbLevel() {
         return dbLevel;
     }
 
+    /**
+     *  Set the decibel level
+     * @param dbLevel
+     */
     public void setDbLevel(double dbLevel) {
         this.dbLevel = dbLevel;
     }
+
 
     /**
      *
      */
     public void initialize()
     {
-//        bluetoothSocket = SocketData.getBluetoothSocketData();
+        bluetoothSocket = SocketData.getBluetoothSocketData();
 //
 //        startButton = (Button) findViewById(R.id.startButton);
 //        stopButton = (Button) findViewById(R.id.stopButton);
@@ -184,7 +192,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
      *
      *
      */
-    public void CalculatePitchLoudness()
+    public void CalculatePitchAndDecibel()
     {
 
         dispatcher.addAudioProcessor(new PitchProcessor(PitchProcessor.PitchEstimationAlgorithm.FFT_YIN, 22050, size*2, new PitchDetectionHandler() {
@@ -194,27 +202,25 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
                                     AudioEvent audioEvent) {
 
                 double pitchValue = pitchDetectionResult.getPitch();
-                Log.d("SECONDS PASSED",String.valueOf(dispatcher.secondsProcessed()));
-                Log.d("PITCH", String.valueOf(pitchValue));
-                double amplitudeValue = CalculateLoudness(audioEvent.getFloatBuffer(), audioEvent.getBufferSize());
+//                Log.d("SECONDS PASSED",String.valueOf(dispatcher.secondsProcessed()));
+//                Log.d("PITCH", String.valueOf(pitchValue));
+//                double amplitudeValue = CalculateLoudness(audioEvent.getFloatBuffer(), audioEvent.getBufferSize());
                 setDbLevel(soundPressureLevel(audioEvent.getFloatBuffer()));
                 calculateThreshold(getDbLevel());
-                Log.d("AMPLITUDE", String.valueOf(amplitudeValue));
-                Log.d("DECIBEL", String.valueOf(getDbLevel()));
+//                Log.d("AMPLITUDE", String.valueOf(amplitudeValue));
+//                Log.d("DECIBEL", String.valueOf(getDbLevel()));
 
 //                MusicFragment musicFragment = (MusicFragment)getSupportFragmentManager().findFragmentById(R.id.music_graph_layout);
 //                musicFragment.updateGraph(getDbLevel(),dispatcher.secondsProcessed());
 
-
-
                 display(getDbLevel(), dispatcher.secondsProcessed());
-                threadData = new Thread(new transmitData());
-                threadData.start();
+//                threadData = new Thread(new transmitData());
+//                threadData.start();
 
             }
         }));
 
-        Log.d("THRESHOLD", String.valueOf(getThreshold(AVG_THRESHOLD)));
+        Log.d("THRESHOLD", String.valueOf(getThreshold(AVG)));
     }
 
     /**
@@ -232,7 +238,11 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
         return Math.abs(sumLevel/bufferSize);
     }
 
-
+    /**
+     *  Calculates the decibel level for the amplitude data collected the buffer.
+     * @param buffer - data collected by audio Event
+     * @return - returns absolute decibel level for the collected data in the buffer.
+     */
     private double soundPressureLevel(final float[] buffer) {
         double power = 0.0D;
         for (float element : buffer) {
@@ -244,6 +254,11 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
 
     }
 
+    /**
+     * Calculate the ranges of decibel levels as found during the training session
+     * Based on these range decide the threshold level for calibrating the microphone
+     * @param dbValue - decibel level as calculated.
+     */
     private void calculateThreshold(double dbValue) {
         double secondsProcessed = Math.abs(dispatcher.secondsProcessed());
 
@@ -253,10 +268,9 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
         if((secondsProcessed <= 2))
             amplitudeBuffer.add(dbValue);
         else if((secondsProcessed<2.20) && ((secondsProcessed%2 >= 0) && (secondsProcessed%2 < 0.05))) {
-            calculateRanges();
+            calculateRanges();  // Calculate the range for which the decibel level spans.
         }
     }
-
     /**
      * Inorder to standardize the decibel values as perceived by different microphones,
      * Calculate the minimum, maximum, average value of the amplitude for a period of 2sec.
@@ -273,7 +287,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
             if(max < amplitudeBuffer.get(i))
                 max = amplitudeBuffer.get(i);
             avg += amplitudeBuffer.get(i);
-            Log.d("AMPLITUDE BUFFER", String.valueOf(amplitudeBuffer.get(i)));
+            //Log.d("AMPLITUDE BUFFER", String.valueOf(amplitudeBuffer.get(i)));
         }
         avg = avg/amplitudeBuffer.size();
 
@@ -284,10 +298,15 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
          * i.e. 40 > 60
          */
         setThreshold(max, MIN);
+        Log.d("min", String.valueOf(max));
         setThreshold(min, MAX);
-        setThreshold(avg, AVG_THRESHOLD);
+        Log.d("max", String.valueOf(min));
+        setThreshold(avg, AVG);
+        Log.d("Avg", String.valueOf(avg));
         setThreshold((avg+min)/2, AVG_MAX);
+        Log.d("Avg_max", String.valueOf((avg+min)/2));
         setThreshold((avg+max)/2, AVG_MIN);
+        Log.d("Avg_min", String.valueOf((avg+max)/2));
     }
 
     /**
@@ -303,7 +322,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
 //                pitchText.setText("" + pitchValue);
 //                amplitudeText.setText("" + amplitudeValue);
 //                durationText.setText(""+duration);
-//                thresholdText.setText(""+getThreshold(AVG_THRESHOLD));
+//                thresholdText.setText(""+getThreshold(AVG));
             }
         });
 
@@ -322,93 +341,193 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
                 //Initialize audio dispatcher to listen from microphone
                 dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,1024,size);
 
-                // Calculate the pitch and loudness in the detected audio stream
-                //CalculatePitchLoudness(dispatcher);
-                CalculatePitchLoudness();
+        transmitData = new TransmitData(true);   // initialize data transmission object
 
-                // do this calculation in a thread
+        // Calculate the decibel level in the detected audio stream
+        CalculatePitchAndDecibel();
 
-                thread = new Thread(dispatcher,"Audio Dispatcher");
-                //threadData = new Thread(new transmitData());
-                thread.start();
+        // Keep listening to music and calculate the decibel level for data captured in buffer
+        threadMusic = new Thread(dispatcher,"Audio Dispatcher");
+        // Keep polling 'dbLevel' to transmit appropriate color as per the decibel value
+        threadData = new Thread(transmitData, "Color Transmition");
+        threadMusic.start();
+        threadData.start();
+        Log.d("threads","Threads started");
     }
 
     @Override
     public void onStopButtonPressed() {
-//         threadData.start();
-                thread.interrupt();
-                thread = null;
-             //   threadData.interrupt();
-             //   threadData = null;
-                try{
-                    if(dispatcher!=null)
-                    {
-                        dispatcher.stop();
-                    }
-                }
-                catch (Exception e) {
-                    e.printStackTrace();
-                }
-    }
+        transmitData.setMusic(false);   // send a clear data to stop the effects of musical lights
 
-    private class transmitData implements Runnable{
-        public void run() {
-            try {
-                threadData.sleep(10);
-//                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            String data;
-            /* 180 data sets have to generated
-             * 60 LEDs and 3 values for each LED : RGB
-             * Hence, 180 = 60*3
-             */
-            RandomNumberArray arr = new RandomNumberArray(180);
 
-            /*
-             * Values above 70 are silent values. For silence range, transmit  data
-             * decibel Number line is:       |---------|---------|-------|---------|
-             *                              MAX     AVG_MAX     AVG   AVG_MIN   MIN
-             * the intensity Number Line is: |---------|---------|-------|---------|
-             *                              MIN     AVG_MIN     AVG   AVG_MAX   MAX
-             *                               |--range1-|------range2-----|--range3-|
-             *
-             */
-//            if (getDbLevel() > getThreshold(AVG_MIN) && getDbLevel() < 70) {
-//                arr.generateArray(new Random().nextInt(3), intensityRange[MAX],intensityRange[AVG_MAX]);
-//            }
-//            else if (getDbLevel() > getThreshold(AVG_MAX) && getDbLevel() < getThreshold(AVG_MIN)) {
-//                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MAX],intensityRange[AVG_MIN]);
-//            }
-//            else if (getDbLevel() > getThreshold(MAX) && getDbLevel() < getThreshold(AVG_MAX)) {
-//                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MIN],intensityRange[MIN]);
-//            }
-//            else if(getDbLevel() >= 70) {
-//                arr.generateArray(0, -1, 0);
-//            }
+        try {
+            String data = generateColorData(transmitData.isMusic()).toString();
+            // Log.d("BT", "Sending data" + data);
+            btSocket.getOutputStream().write(data.getBytes());
+       //     Thread.sleep(50);
+//                        data = generateColorData(false).toString();
+//                        btSocket.getOutputStream().write(data.getBytes());
+        } catch (IOException e) {
+            msg("Error");
+        }
 
-            if(getDbLevel() > getThreshold(AVG_MAX) && getDbLevel() < 70){
-                arr.generateArray(new Random().nextInt(3),intensityRange[MAX],intensityRange[AVG_MAX]);
-            }
-            else{
-                arr.generateClearArray();
+        try {
+            threadData.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
+        threadMusic.interrupt();
+        threadMusic = null;
+//                threadData.interrupt();
+        threadData = null;
+
+        // Nullify music listener and data transmission objects
+        try{
+            if(dispatcher!=null)
+            {
+                dispatcher.stop();
             }
 
-
-
-            if (bluetoothSocket != null) {
-                try {
-                    data = arr.toString();
-                    bluetoothSocket.getOutputStream().write(data.getBytes());
-                } catch (IOException e) {
-                    msg("Error");
-                }
-            }
+            transmitData = null;
+        }
+        catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-    // fast way to call Toast
+
+
+    /**
+     * Private class to transmit data over bluetooth
+     */
+    private class TransmitData implements Runnable{
+
+        private boolean music;
+
+        /**
+         * Parametrized constructor for the transmission class
+         * @param playMusic
+         */
+        public TransmitData(boolean playMusic)
+        {
+            this.music = playMusic;
+        }
+
+        /**
+         * Check if music is being played or not
+         * true - music is being played and the application is listening to it
+         * false - application not listening to music
+         * @return - boolean value whether application is listening to music or not
+         */
+        public boolean isMusic() {
+            return music;
+        }
+
+        /**
+         * Set whether the application is listening to music or not.
+         * true - application is listening to music
+         * false - application not listening to music
+         * @param music
+         */
+        public void setMusic(boolean music) {
+            this.music = music;
+        }
+
+        /**
+         * While bluetooth socket connection exists, keep generating color data for the
+         * decibel level value calculated and send it via bluetooth.
+         */
+        public void run() {
+            while (btSocket != null && musicFragment.getStopEnabled()) {
+//                try {
+//                    // sleep for 100 ms before the next data is sent.
+//                    // This is to assist in showing flickering of lights
+//                    Thread.sleep(100);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                if (btSocket != null) {
+
+                try {
+                    String data = generateColorData(isMusic()).toString();
+                    // Log.d("BT", "Sending data" + data);
+                    btSocket.getOutputStream().write(data.getBytes());
+                    Thread.sleep(50);
+//                        data = generateColorData(false).toString();
+//                        btSocket.getOutputStream().write(data.getBytes());
+                } catch (IOException e) {
+                    msg("Error");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+//                }
+            }
+//            msg("Either Stopped listening to Music or Bluetooth disconnected");
+        }
+    }
+
+    /**
+     *
+     * @param playMusic
+     * @return
+     */
+    private RandomNumberArray generateColorData(boolean playMusic)
+    {
+        /* 3 data sets have to generated
+         * All 60 LEDs will have same RGB value
+         *
+         */
+        RandomNumberArray arr = new RandomNumberArray(3);
+
+        /*
+         * Generate data only if music is being played. => playMusic = true
+         * Values above 70 are silent values. For silence range, transmit  data
+         *  Eg: decibel:                 |---------|---------|-------|---------|
+         *                              70        62.5      55      47.5      40
+         * decibel Number line is:       |---------|---------|-------|---------|
+         *                              MIN     AVG_MIN     AVG   AVG_MAX     MAX
+         * the intensity Number Line is: |---------|---------|-------|---------|
+         *                              MIN     AVG_MIN     AVG   AVG_MAX   MAX
+         *                               |--range1-|------range2-----|--range3-|
+         *Eg intensity:                  |---------|---------|-------|---------|
+         *                               0        64        128     192       255
+         */
+        if (playMusic) {
+            if (getDbLevel() > getThreshold(MIN)){
+                arr.generateClearArray();
+                //Log.d("min","im here");
+            }
+            else if(getDbLevel() < getThreshold(MIN) && getDbLevel() > getThreshold(AVG_MIN)){
+                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MIN], intensityRange[MIN]);
+                //Log.d("avg_min - min","im here");
+            }
+            else if(getDbLevel() < getThreshold(AVG_MIN) && getDbLevel() > getThreshold(AVG_MAX)){
+                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MAX], intensityRange[AVG_MIN]);
+                //Log.d("avg_max - avg_min","im here");
+            }
+            else if(getDbLevel() < getThreshold(AVG_MAX) && getDbLevel() > getThreshold(MAX)){
+                arr.generateArray(new Random().nextInt(3), intensityRange[MAX], intensityRange[AVG_MAX]);
+                //Log.d("avg_max - max","im here");
+            }
+            else if(getDbLevel() < getThreshold(MAX)){
+                arr.generateArray(new Random().nextInt(3), intensityRange[MAX], intensityRange[MAX]);
+                //Log.d("max","im here");
+            }
+        }
+        else    // Music is stopped, hence clear data.
+            arr.generateClearArray();
+
+//                if (getDbLevel() > getThreshold(AVG_MAX) && getDbLevel() < 70) {
+//                    arr.generateArray(new Random().nextInt(3), intensityRange[MAX], intensityRange[AVG_MAX]);
+//                } else {
+//                    arr.generateClearArray();
+//                }
+        return arr;
+    }
+
+    // display toast
     private void msg(String s)
     {
         Toast.makeText(getApplicationContext(),s,Toast.LENGTH_SHORT).show();
@@ -419,6 +538,8 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
         private int mNumberOfRandomNumbers;
         private int[] mArrayOfRandomNumbers;
         Random random;
+
+
         public RandomNumberArray(int numberOfRandomNumbers){
             mNumberOfRandomNumbers = numberOfRandomNumbers;
             mArrayOfRandomNumbers = new int[numberOfRandomNumbers];
@@ -433,24 +554,26 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
          * @param min - Minimum color intensity
          */
         public void generateArray(int color, int max, int min){
-            for(int i=color;i<mNumberOfRandomNumbers;i+=3){
-                mArrayOfRandomNumbers[i] = random.nextInt(max-min+1)+min;
-            }
+//            for(int i=color;i<mNumberOfRandomNumbers;i+=3){
+            mArrayOfRandomNumbers[color] = random.nextInt(max-min+1)+min;
+//            }
         }
+
         public void generateClearArray(){
             for(int i=0;i<mNumberOfRandomNumbers;i++){
                 mArrayOfRandomNumbers[i] = 0;
             }
         }
+
         @Override
         public String toString(){
             StringBuilder sb = new StringBuilder();
             for(int i=0;i<mNumberOfRandomNumbers;i++){
-                sb.append(mArrayOfRandomNumbers[i]);
-                if(i!=mNumberOfRandomNumbers-1) {
-                    sb.append(",");
-                }
-                else{
+                sb.append(String.format("%03d",mArrayOfRandomNumbers[i]));
+//                if(i!=mNumberOfRandomNumbers-1) {
+//                    sb.append(",");
+//                }
+                if(i==mNumberOfRandomNumbers-1) {
                     sb.append("\n");
                 }
             }
@@ -508,7 +631,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
 
 
                 if(findViewById(R.id.music_graph_layout)==null){
-                    MusicFragment musicFragment = new MusicFragment();
+                    musicFragment = new MusicFragment();
                     getSupportFragmentManager().beginTransaction()
                             .replace(R.id.music_frame_layout,musicFragment)
                             .addToBackStack(null)
