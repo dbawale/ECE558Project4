@@ -8,8 +8,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -24,11 +27,12 @@ import java.util.UUID;
 
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.AudioEvent;
+import be.tarsos.dsp.io.android.AudioDispatcherFactory;
 import be.tarsos.dsp.pitch.PitchDetectionHandler;
 import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchProcessor;
 
-public class MusicActivity extends AppCompatActivity implements ConnectFragment.OnConnectButtonPressedListener {
+public class MusicActivity extends FragmentActivity implements ConnectFragment.OnConnectButtonPressedListener, MusicFragment.OnMusicButtonPressedListener {
 
     //private float pitchValue;
     //private double amplitudeValue;
@@ -188,14 +192,22 @@ public class MusicActivity extends AppCompatActivity implements ConnectFragment.
             @Override
             public void handlePitch(PitchDetectionResult pitchDetectionResult,
                                     AudioEvent audioEvent) {
+
                 double pitchValue = pitchDetectionResult.getPitch();
+                Log.d("SECONDS PASSED",String.valueOf(dispatcher.secondsProcessed()));
                 Log.d("PITCH", String.valueOf(pitchValue));
                 double amplitudeValue = CalculateLoudness(audioEvent.getFloatBuffer(), audioEvent.getBufferSize());
                 setDbLevel(soundPressureLevel(audioEvent.getFloatBuffer()));
                 calculateThreshold(getDbLevel());
                 Log.d("AMPLITUDE", String.valueOf(amplitudeValue));
                 Log.d("DECIBEL", String.valueOf(getDbLevel()));
-                display(pitchValue, amplitudeValue);
+
+//                MusicFragment musicFragment = (MusicFragment)getSupportFragmentManager().findFragmentById(R.id.music_graph_layout);
+//                musicFragment.updateGraph(getDbLevel(),dispatcher.secondsProcessed());
+
+
+
+                display(getDbLevel(), dispatcher.secondsProcessed());
                 threadData = new Thread(new transmitData());
                 threadData.start();
 
@@ -281,15 +293,17 @@ public class MusicActivity extends AppCompatActivity implements ConnectFragment.
     /**
      * Display data on UI in a UI thread.
      */
-    private void display(final double pitchValue, final double amplitudeValue)
+    private void display(final double dBValue, final double seconds)
     {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                pitchText.setText("" + pitchValue);
-                amplitudeText.setText("" + amplitudeValue);
-                durationText.setText(""+duration);
-                thresholdText.setText(""+getThreshold(AVG_THRESHOLD));
+                MusicFragment fragment= new MusicFragment();
+                fragment.updateGraph(dBValue,(float)seconds);
+//                pitchText.setText("" + pitchValue);
+//                amplitudeText.setText("" + amplitudeValue);
+//                durationText.setText(""+duration);
+//                thresholdText.setText(""+getThreshold(AVG_THRESHOLD));
             }
         });
 
@@ -297,8 +311,44 @@ public class MusicActivity extends AppCompatActivity implements ConnectFragment.
 
     @Override
     public void onConnectButtonPressed() {
+
         Intent connect_bluetooth = new Intent(MusicActivity.this,BluetoothActivity.class);
         startActivityForResult(connect_bluetooth,REQUEST_CODE_CONNECT);
+    }
+
+    @Override
+    public void onStartButtonPressed() {
+        amplitudeBuffer = new ArrayList<Double>();
+                //Initialize audio dispatcher to listen from microphone
+                dispatcher = AudioDispatcherFactory.fromDefaultMicrophone(sampleRate,1024,size);
+
+                // Calculate the pitch and loudness in the detected audio stream
+                //CalculatePitchLoudness(dispatcher);
+                CalculatePitchLoudness();
+
+                // do this calculation in a thread
+
+                thread = new Thread(dispatcher,"Audio Dispatcher");
+                //threadData = new Thread(new transmitData());
+                thread.start();
+    }
+
+    @Override
+    public void onStopButtonPressed() {
+//         threadData.start();
+                thread.interrupt();
+                thread = null;
+             //   threadData.interrupt();
+             //   threadData = null;
+                try{
+                    if(dispatcher!=null)
+                    {
+                        dispatcher.stop();
+                    }
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
     }
 
     private class transmitData implements Runnable{
@@ -455,9 +505,15 @@ public class MusicActivity extends AppCompatActivity implements ConnectFragment.
                 isBtConnected = true;
                 SocketData socketData = SocketData.getInstance();
                 socketData.saveBluetoothSocketData(btSocket);
-                //Load new fragment here
-//                Intent mainactivityIntent = new Intent(MusicActivity.this,MusicActivity.class);
-//                startActivity(mainactivityIntent);
+
+
+                if(findViewById(R.id.music_graph_layout)==null){
+                    MusicFragment musicFragment = new MusicFragment();
+                    getSupportFragmentManager().beginTransaction()
+                            .replace(R.id.music_frame_layout,musicFragment)
+                            .addToBackStack(null)
+                            .commit();
+                }
             }
             progress.dismiss();
         }

@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 
-public class ConnectFragment extends Fragment implements Button.OnClickListener{
+public class ConnectFragment extends Fragment{
 
     private OnConnectButtonPressedListener mListener;
     private Button connectBtn;
@@ -71,24 +71,12 @@ public class ConnectFragment extends Fragment implements Button.OnClickListener{
     }
 
     /**
-     * The onClick method
-     * @param view
-     */
-    @Override
-    public void onClick(View view) {
-        //If the clicked button is the connect button, then call the onConnectButtonPressed
-        //function on hosting activity
-        if(view.getId()==R.id.connectbtn){
-            OnConnectButtonPressedListener listener = (OnConnectButtonPressedListener)getActivity();
-            listener.onConnectButtonPressed();
-        }
-    }
-
-    /**
      * OnConnectButtonPressedListener should be implemented by any activity that hosts
      * ConnectFragment
      */
     public interface OnConnectButtonPressedListener {
         void onConnectButtonPressed();
     }
+
+
 }

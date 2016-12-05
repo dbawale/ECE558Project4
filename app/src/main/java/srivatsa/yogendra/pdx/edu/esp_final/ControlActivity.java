@@ -241,8 +241,6 @@ public class ControlActivity extends AppCompatActivity {
         switch (requestCode){
             case REQUEST_CODE_CONNECT:
                 if (resultCode == RESULT_OK){
-//                    Intent control_activity_intent = getIntent();
-//                    address = control_activity_intent.getStringExtra("Address_device");
                     address = intent.getStringExtra("Address_device");
                     new ConnectBT().execute();
                     sendbtn.setEnabled(true);
