@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<document>
+<!--The data in this file is primarily intended for consumption by Xilinx tools.
+The structure and the elements are likely to change over the next few releases.
+This means code written to parse this file will need to be revisited each subsequent release.-->
+<application name="pa" timeStamp="Sat Dec 03 06:18:35 2016">
+<section name="Project Information" visible="false">
+<property name="ProjectID" value="7a6203df4e1f4e1aa791cb450fc89fdd" type="ProjectID"/>
+<property name="ProjectIteration" value="1" type="ProjectIteration"/>
+</section>
+<section name="PlanAhead Usage" visible="true">
+<item name="Project Data">
+<property name="SrcSetCount" value="1" type="SrcSetCount"/>
+<property name="ConstraintSetCount" value="1" type="ConstraintSetCount"/>
+<property name="DesignMode" value="RTL" type="DesignMode"/>
+<property name="SynthesisStrategy" value="Vivado Synthesis Defaults" type="SynthesisStrategy"/>
+<property name="ImplStrategy" value="Vivado Implementation Defaults" type="ImplStrategy"/>
+</item>
+<item name="Java Command Handlers">
+<property name="CloseProject" value="1" type="JavaHandler"/>
+<property name="EditInIPPackagerHandler" value="1" type="JavaHandler"/>
+<property name="IPPackagerHandler" value="1" type="JavaHandler"/>
+<property name="ShowView" value="1" type="JavaHandler"/>
+</item>
+<item name="Gui Resources Info">
+<property name="PAResourceCommand.PACommandNames_EDIT_IN_IP_PACKAGER, Edit in IP Packager" value="1" type="GuiResourceData"/>
+<property name="PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, [root, Design Sources, Non-module Files], 1" value="1" type="GuiResourceData"/>
+<property name="PAResourceEtoH.FileSetPanel_FILE_SET_PANEL_TREE, [root, Design Sources, n4fpga (n4fpga.v" value="7" type="GuiResourceData"/>
+<property name="PAResourceEtoH.FloatingTopDialog_AUTOMATICALLY_PICK_NEW_TOP_MODULE, Automatically pick new top module" value="1" type="GuiResourceData"/>
+<property name="PAResourceEtoH.FloatingTopDialog_IGNORE_AND_CONTINUE_WITH_INVALID_TOP, Ignore and continue with invalid top module" value="1" type="GuiResourceData"/>
+<property name="PAResourceEtoH.FloatingTopDialog_SPECIFY_NEW_TOP_MODULE, Specify a new top module:" value="1" type="GuiResourceData"/>
+<property name="PAResourceItoN.MsgTreePanel_MESSAGE_VIEW_TREE, [, Synthesis, [Synth 8-439] module 'LEDDriver_v1_0' not found [c:/Users/Vatsa/ESP_Final_Project/ESP_Final_Project.srcs/sources_1/bd/embsys/ip/embsys_LEDDriver_0_0/synth/embsys_LEDDriver_0_0.v:129]. ], 1, false" value="2" type="GuiResourceData"/>
+<property name="PAResourceOtoP.PAViews_PACKAGE_IP, Package IP - LEDDriver" value="2" type="GuiResourceData"/>
+<property name="PAResourceQtoS.SrcMenu_IP_DOCUMENTATION, IP Documentation" value="1" type="GuiResourceData"/>
+<property name="RDIResource.BaseDialog_OK, OK" value="3" type="GuiResourceData"/>
+</item>
+<item name="Other">
+<property name="GuiMode" value="36" type="GuiMode"/>
+<property name="BatchMode" value="0" type="BatchMode"/>
+<property name="TclMode" value="33" type="TclMode"/>
+</item>
+</section>
+</application>
+</document>
