@@ -2,6 +2,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:backgroundTintMode="src_over"
     tools:context="srivatsa.yogendra.pdx.edu.esp_final.MusicFragment"
     android:id="@+id/music_graph_layout">
 

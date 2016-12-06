@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">ESP_FINAL</string>
+    <string name="app_name">Luminos Luces</string>
     <string name="title_paired_devices">Paired Devices</string>
     <string name="title_other_devices">Available Devices</string>
     <string name="bluetooth_not_supported">Bluetooth is not supported on this device</string>
@@ -10,7 +10,8 @@
     <string name="amplitudeText">AMPLITUDE</string>
     <string name="durationText">DURATION</string>
     <string name="thresholdText">THRESHOLD</string>
-    <string name="bluetooth_connect">Connect</string>
+    <string name="bluetooth_connect">CONNECT</string>
+    <string name="scanDevices">Scan for More Devices</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
