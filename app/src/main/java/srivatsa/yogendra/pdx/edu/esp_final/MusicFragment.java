@@ -2,7 +2,6 @@ package srivatsa.yogendra.pdx.edu.esp_final;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +18,7 @@ public class MusicFragment extends Fragment {
     private Button startButton, stopButton;
     static LineGraphSeries<DataPoint> series;
     static Boolean isStopEnabled;
-   // private final Handler mHandler = new Handler();
+
     private Runnable mTimer;
     public MusicFragment() {
         // Required empty public constructor
@@ -103,13 +102,7 @@ public class MusicFragment extends Fragment {
     }
 
     public void updateGraph(final double dBValue, final float seconds){
-
                 series.appendData(new DataPoint(seconds, dBValue), true, 400);
-//                try {
-//                    Thread.sleep(1000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
     }
 
     public interface OnMusicButtonPressedListener {
