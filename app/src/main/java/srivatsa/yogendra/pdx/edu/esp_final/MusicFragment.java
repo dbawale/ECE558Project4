@@ -1,6 +1,8 @@
 package srivatsa.yogendra.pdx.edu.esp_final;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -9,14 +11,14 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
-import com.jjoe64.graphview.series.LineGraphSeries;
 
 
 public class MusicFragment extends Fragment {
     private OnMusicButtonPressedListener mListener;
     private Button startButton, stopButton;
-    static LineGraphSeries<DataPoint> series;
+    static BarGraphSeries<DataPoint> series;
     static Boolean isStopEnabled;
 
     private Runnable mTimer;
@@ -31,7 +33,7 @@ public class MusicFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        series = new LineGraphSeries<>();
+        series = new BarGraphSeries<>();
     }
 
     @Override
@@ -43,6 +45,9 @@ public class MusicFragment extends Fragment {
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(-5);
         graph.getViewport().setMaxX(2);
+        graph.getViewport().setMaxY(0);
+        graph.getViewport().setMinY(-100);
+
         graph.addSeries(series);
         startButton = (Button) view.findViewById(R.id.startbutton);
         stopButton = (Button) view.findViewById(R.id.stopbutton);
@@ -65,6 +70,8 @@ public class MusicFragment extends Fragment {
             }
         });
         return view;
+
+
     }
 
 
@@ -104,6 +111,13 @@ public class MusicFragment extends Fragment {
     public void updateGraph(final double dBValue, final float seconds){
                 series.appendData(new DataPoint(seconds, dBValue), true, 400);
     }
+
+    public void changeColor(int RED, int BLUE, int GREEN){
+        Paint paint = new Paint();
+        paint.setColor(Color.rgb(RED,GREEN,BLUE));
+        series.setCustomPaint(paint);
+    }
+
 
     public interface OnMusicButtonPressedListener {
         void onStartButtonPressed();

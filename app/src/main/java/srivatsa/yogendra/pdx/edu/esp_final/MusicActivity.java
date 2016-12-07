@@ -7,29 +7,32 @@ package srivatsa.yogendra.pdx.edu.esp_final;
  * TODO: When application exists, disconnect bluetooth connection between phone and board : OnDestroy()
  * TODO: When bluetooth is switched off, then the application should return to MusicActivity.
  * TODO: OnResume, check if the Bluetooth connection exists, if not then the first Acivity MusicActiviy should be launched and the user be asked to connect to bluetooth.
- * TODO: Check if microphone is switched on when the application starts.
+ * DONE: Check if microphone is switched on when the application starts.
  * TODO: OnResume, check if microphone is on.
  * TODO: UI Enhancement
- * TODO: Send double color to an LED.
+ * DONE: Send double color to an LED.
+ * DONE: Color of the graph changes according to the LED value
+ * DONE: The graph is inverted
  */
 
 
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
-
-
-import android.widget.Toast;
-
 import java.util.Random;
 import java.util.UUID;
 
@@ -74,11 +77,25 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
     private final int REQUEST_CODE_CONNECT =1;
 
     private  MusicFragment musicFragment;
+    private int[] mArrayOfRandomNumbers;    // random number array
+    private static final int RECORD_REQUEST_CODE = 101;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music);
+        int permission = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.RECORD_AUDIO);
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.RECORD_AUDIO},RECORD_REQUEST_CODE);
+        }
+
+
+
+
+
+
         if(findViewById(R.id.connect_frame_layout)==null){
             if(savedInstanceState !=null){
                 return;
@@ -369,8 +386,8 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
             @Override
             public void run() {
                 MusicFragment fragment= new MusicFragment();
-                fragment.updateGraph(dBValue,(float)seconds);
-
+                fragment.updateGraph((-dBValue),(float)seconds);
+                fragment.changeColor(mArrayOfRandomNumbers[0],mArrayOfRandomNumbers[1],mArrayOfRandomNumbers[2]);
                 //Comment above two lines and uncomment below lines if testing MusicFragment
                 // without bluetooth connection
                 //DO NOT DELETE ANY OF THESE LINES
@@ -506,19 +523,19 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
                 //Log.d("min","im here");
             }
             else if(getDbLevel() < getThreshold(MIN) && getDbLevel() > getThreshold(AVG_MIN)){
-                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MIN], intensityRange[MIN]);
+                arr.generateArray(new Random().nextInt(6), intensityRange[AVG_MIN], intensityRange[MIN]);
                 //Log.d("avg_min - min","im here");
             }
             else if(getDbLevel() < getThreshold(AVG_MIN) && getDbLevel() > getThreshold(AVG_MAX)){
-                arr.generateArray(new Random().nextInt(3), intensityRange[AVG_MAX], intensityRange[AVG_MIN]);
+                arr.generateArray(new Random().nextInt(6), intensityRange[AVG_MAX], intensityRange[AVG_MIN]);
                 //Log.d("avg_max - avg_min","im here");
             }
             else if(getDbLevel() < getThreshold(AVG_MAX) && getDbLevel() > getThreshold(MAX)){
-                arr.generateArray(new Random().nextInt(3), intensityRange[MAX], intensityRange[AVG_MAX]);
+                arr.generateArray(new Random().nextInt(6), intensityRange[MAX], intensityRange[AVG_MAX]);
                 //Log.d("avg_max - max","im here");
             }
             else if(getDbLevel() < getThreshold(MAX)){
-                arr.generateArray(new Random().nextInt(3), intensityRange[MAX], intensityRange[MAX]);
+                arr.generateArray(new Random().nextInt(6), intensityRange[MAX], intensityRange[MAX]);
                 //Log.d("max","im here");
             }
         }
@@ -539,7 +556,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
      */
     private class RandomNumberArray{
         private int mNumberOfRandomNumbers;     // size of array
-        private int[] mArrayOfRandomNumbers;    // random number array
+
         Random random;
 
         /**
@@ -561,7 +578,13 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
          * @param min - Minimum color intensity
          */
         public void generateArray(int color, int max, int min){
-            mArrayOfRandomNumbers[color] = random.nextInt(max-min+1)+min;
+            if (color >= 3){
+                mArrayOfRandomNumbers[new Random().nextInt(3)] = random.nextInt(max-min+1)+min;
+                mArrayOfRandomNumbers[new Random().nextInt(3)] = random.nextInt(max-min+1)+min;
+            }
+            else {
+                mArrayOfRandomNumbers[color] = random.nextInt(max - min + 1) + min;
+            }
         }
 
         /**
@@ -671,4 +694,20 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case RECORD_REQUEST_CODE: {
+
+                if (grantResults.length == 0
+                        || grantResults[0] !=
+                        PackageManager.PERMISSION_GRANTED) {
+                    msg("Microphone Required to run the app, Good Bye......");
+                    finish();
+                }
+                return;
+            }
+        }
+    }
 }
