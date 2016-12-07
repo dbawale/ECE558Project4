@@ -2,14 +2,14 @@ package srivatsa.yogendra.pdx.edu.esp_final;
 
 
 /**
- * TODO: Replace LineGraph by BarGraph
- * TODO: On exit from app or MusicActivity Disconnect bluetooth
- * TODO: When application exists, disconnect bluetooth connection between phone and board : OnDestroy()
- * TODO: When bluetooth is switched off, then the application should return to MusicActivity.
- * TODO: OnResume, check if the Bluetooth connection exists, if not then the first Acivity MusicActiviy should be launched and the user be asked to connect to bluetooth.
+ * DONE: Replace LineGraph by BarGraph
+ * Done: On exit from app or MusicActivity Disconnect bluetooth
+ * Done: When application exists, disconnect bluetooth connection between phone and board : OnDestroy()
+ * DONE: When bluetooth is switched off, then the application should return to MusicActivity.
+ * DONE: OnResume, check if the Bluetooth connection exists, if not then the first Acivity MusicActiviy should be launched and the user be asked to connect to bluetooth.
  * DONE: Check if microphone is switched on when the application starts.
- * TODO: OnResume, check if microphone is on.
- * TODO: UI Enhancement
+ * DONE: OnResume, check if microphone is on.
+ * DONE: UI Enhancement
  * DONE: Send double color to an LED.
  * DONE: Color of the graph changes according to the LED value
  * DONE: The graph is inverted
@@ -79,22 +79,14 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
     private  MusicFragment musicFragment;
     private int[] mArrayOfRandomNumbers;    // random number array
     private static final int RECORD_REQUEST_CODE = 101;
+    private int backPressedCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music);
-        int permission = ContextCompat.checkSelfPermission(this,
-                Manifest.permission.RECORD_AUDIO);
-
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.RECORD_AUDIO},RECORD_REQUEST_CODE);
-        }
-
-
-
-
-
+        backPressedCount = 0;
+        isMicrophoneOn();
 
         if(findViewById(R.id.connect_frame_layout)==null){
             if(savedInstanceState !=null){
@@ -113,7 +105,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
      */
     @Override
     public void onConnectButtonPressed() {
-
+        backPressedCount = 0;
         Intent connect_bluetooth = new Intent(MusicActivity.this,BluetoothActivity.class);
         startActivityForResult(connect_bluetooth,REQUEST_CODE_CONNECT);
     }
@@ -124,6 +116,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
      */
     @Override
     public void onStartButtonPressed() {
+        backPressedCount = 0;
         amplitudeBuffer = new ArrayList<Double>();
         pitchBuffer = new ArrayList<Double>();
 
@@ -146,6 +139,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
 
     @Override
     public void onStopButtonPressed() {
+        backPressedCount = 0;
         transmitData.setMusic(false);   // send a clear data to stop the effects of musical lights
 
         // Send clear data to LEDs when stopped to listen to music.
@@ -613,6 +607,17 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
             return sb.toString();
         }
     }
+//
+//    @Override
+//    public void onDestroy(){
+//        if (btSocket.isConnected()){
+//            try {
+//                btSocket.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
 
     /**
      * Class to Establish Bluetooth Connection.
@@ -690,6 +695,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
                 else {
                     msg("Error Finding Device");
                     finish();
+
                 }
                 break;
         }
@@ -709,6 +715,72 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
                 }
                 return;
             }
+        }
+    }
+
+    @Override
+    public void onBackPressed(){
+
+        if (backPressedCount < 1 ){
+            msg("Press back again to exit");
+            backPressedCount = backPressedCount + 1;
+        }
+        else{
+            msg("Bye Bye.....");
+            backPressedCount = 0;
+
+            if (musicFragment.getStopEnabled()){
+                musicFragment.setStartEnabled();
+                onStopButtonPressed();
+            }
+
+            if (btSocket.isConnected()){
+                try {
+                    btSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            finish();
+        }
+    }
+
+    public void isMicrophoneOn(){
+        int permission = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.RECORD_AUDIO);
+
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.RECORD_AUDIO},RECORD_REQUEST_CODE);
+        }
+
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        backPressedCount = 0;
+
+        if (isBtConnected){
+            if(findViewById(R.id.music_graph_layout)==null){
+                musicFragment = new MusicFragment();
+                getSupportFragmentManager().beginTransaction()
+                        .replace(R.id.music_frame_layout,musicFragment)
+                        .addToBackStack(null)
+                        .commit();
+            }
+        }
+    }
+
+    @Override
+    public void onPause() {
+
+        super.onPause();
+        if (findViewById(R.id.music_graph_layout) != null) {
+            if (musicFragment.getStopEnabled()) {
+                musicFragment.setStartEnabled();
+                onStopButtonPressed();
+            }
+
         }
     }
 }

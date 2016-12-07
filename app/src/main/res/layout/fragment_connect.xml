@@ -1,4 +1,4 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -24,5 +24,18 @@
         android:background="@android:color/transparent"
         />
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/creditsbtn"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:text="@string/credits"
+        android:textAllCaps="true"
+        android:textSize="@dimen/connect_size"
+        android:textStyle="bold"
+        android:textColor="@color/colorWhite"
+        android:background="@android:color/transparent"
+        />
 
-</FrameLayout>
+</LinearLayout>

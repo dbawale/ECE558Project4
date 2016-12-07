@@ -3,14 +3,10 @@ package srivatsa.yogendra.pdx.edu.esp_final;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -19,7 +15,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 public class BluetoothActivity extends AppCompatActivity {
@@ -30,6 +25,7 @@ private static final String TAG = "BluetoothDevices";
     private final int REQUEST_CONNECT_DEVICE = 0;
     private ArrayAdapter<String> pairedDevicesArrayAdapter;
     String address = null;
+    private int backPressedCount = 0;
 
     @Override
     protected void onCreate (Bundle savedInstanceState) {
@@ -45,6 +41,7 @@ private static final String TAG = "BluetoothDevices";
         Button scanButton = (Button)findViewById(R.id.button_scan);
         scanButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                backPressedCount = 0;
                 Intent bluetoothSettingsIntent = new Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS);
                 startActivity(bluetoothSettingsIntent);
             }
@@ -81,6 +78,7 @@ private static final String TAG = "BluetoothDevices";
     @Override
     public void onResume(){
         super.onResume();
+        backPressedCount = 0;
         if(!bluetoothAdapter.isEnabled()){
             Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(turnOn, REQUEST_CONNECT_DEVICE);
@@ -141,6 +139,7 @@ private static final String TAG = "BluetoothDevices";
     // The on-click listener for all devices in the ListViews
     private AdapterView.OnItemClickListener deviceClickListener = new AdapterView.OnItemClickListener () {
         public void onItemClick (AdapterView<?> av, View v, int arg2, long arg3) {
+            backPressedCount = 0;
             // Cancel discovery because it's costly and we're about to connect
             bluetoothAdapter.cancelDiscovery();
 
@@ -156,5 +155,27 @@ private static final String TAG = "BluetoothDevices";
             finish();
         }
     };
+
+    // display toast
+    private void msg(String s)
+    {
+        Toast.makeText(getApplicationContext(),s,Toast.LENGTH_SHORT).show();
+    }
+
+
+    @Override
+    public void onBackPressed(){
+
+
+        if (backPressedCount < 1 ){
+            msg("Press back again to exit");
+            backPressedCount = backPressedCount + 1;
+        }
+        else{
+            msg("Bye Bye.....");
+            backPressedCount = 0;
+            finish();
+        }
+    }
 
 }

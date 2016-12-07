@@ -1,6 +1,7 @@
 package srivatsa.yogendra.pdx.edu.esp_final;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
@@ -20,6 +21,7 @@ public class MusicFragment extends Fragment {
     private Button startButton, stopButton;
     static BarGraphSeries<DataPoint> series;
     static Boolean isStopEnabled;
+    private final int REQUEST_CODE_CONNECT =1;
 
     private Runnable mTimer;
     public MusicFragment() {
@@ -127,5 +129,17 @@ public class MusicFragment extends Fragment {
     public interface OnMusicButtonPressedListener {
         void onStartButtonPressed();
         void onStopButtonPressed();
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        MusicActivity musicActivity = (MusicActivity) this.getActivity();
+        musicActivity.isMicrophoneOn();
+        if (!musicActivity.btSocket.isConnected()){
+            Intent connect_bluetooth = new Intent(musicActivity,BluetoothActivity.class);
+            startActivityForResult(connect_bluetooth,REQUEST_CODE_CONNECT);
+        }
     }
 }
