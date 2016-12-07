@@ -20,7 +20,7 @@ public class MusicFragment extends Fragment {
     private OnMusicButtonPressedListener mListener;
     private Button startButton, stopButton;
     static BarGraphSeries<DataPoint> series;
-    static Boolean isStopEnabled;
+    static Boolean isStopEnabled = false;
     private final int REQUEST_CODE_CONNECT =1;
 
     private Runnable mTimer;
@@ -77,8 +77,6 @@ public class MusicFragment extends Fragment {
             }
         });
         return view;
-
-
     }
 
 

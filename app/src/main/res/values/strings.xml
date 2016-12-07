@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Luminos Luces</string>
+    <string name="app_name">NatAktu</string>
     <string name="title_paired_devices">Paired Devices</string>
     <string name="title_other_devices">Available Devices</string>
     <string name="bluetooth_not_supported">Bluetooth is not supported on this device</string>
@@ -12,8 +12,9 @@
     <string name="thresholdText">THRESHOLD</string>
     <string name="bluetooth_connect">CONNECT</string>
     <string name="scanDevices">Scan for More Devices</string>
+    <string name="credits">CREDITS</string>
+    <string name="teamName"><i>Developers:</i>\n\nDeven Bawale\n\nSrivatsa Yogendra\n\nTejaswini Vibhute</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="credits">CREDITS</string>
 </resources>

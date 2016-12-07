@@ -77,6 +77,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
     private final int REQUEST_CODE_CONNECT =1;
 
     private  MusicFragment musicFragment;
+    private ConnectFragment connectFragment;
     private int[] mArrayOfRandomNumbers;    // random number array
     private static final int RECORD_REQUEST_CODE = 101;
     private int backPressedCount = 0;
@@ -92,7 +93,7 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
             if(savedInstanceState !=null){
                 return;
             }
-            ConnectFragment connectFragment = new ConnectFragment();
+            connectFragment = new ConnectFragment();
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.music_frame_layout,connectFragment)
                     .commit();
@@ -721,6 +722,13 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
     @Override
     public void onBackPressed(){
 
+        if(connectFragment != null && connectFragment.isCreditsView())
+        {
+            connectFragment.setCreditsView(false);
+            connectFragment.onReturnCreditView();
+            return;
+        }
+
         if (backPressedCount < 1 ){
             msg("Press back again to exit");
             backPressedCount = backPressedCount + 1;
@@ -729,12 +737,12 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
             msg("Bye Bye.....");
             backPressedCount = 0;
 
-            if (musicFragment.getStopEnabled()){
+            if (musicFragment != null && musicFragment.getStopEnabled()){
                 musicFragment.setStartEnabled();
                 onStopButtonPressed();
             }
 
-            if (btSocket.isConnected()){
+            if (btSocket != null && btSocket.isConnected()){
                 try {
                     btSocket.close();
                 } catch (IOException e) {

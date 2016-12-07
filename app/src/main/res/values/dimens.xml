@@ -6,4 +6,7 @@
     <dimen name="connect_size">21sp</dimen>
     <dimen name="titleSize">25sp</dimen>
     <dimen name="deviceSize">15sp</dimen>
+    <dimen name="applicationTitle">60sp</dimen>
+    <dimen name="marginTop">120dp</dimen>
+    <dimen name="marginMiddle">20dp</dimen>
 </resources>

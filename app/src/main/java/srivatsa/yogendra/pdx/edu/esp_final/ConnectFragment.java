@@ -7,12 +7,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
+
+import org.w3c.dom.Text;
 
 
 public class ConnectFragment extends Fragment{
 
     private OnConnectButtonPressedListener mListener;
-    private Button connectBtn;
+    private Button connectBtn, creditBtn;
+    private TextView creditText;
+    private boolean creditsView = false;
 
     public ConnectFragment() {
         // Required empty public constructor
@@ -31,6 +36,8 @@ public class ConnectFragment extends Fragment{
 
         //Find the only widget on this fragment: the connect button
         connectBtn = (Button)view.findViewById(R.id.connectbtn);
+        creditBtn = (Button) view.findViewById(R.id.creditsbtn);
+        creditText = (TextView) view.findViewById(R.id.creditsText);
 
         //Call the hosting activity's onConnectButtonPressed
         connectBtn.setOnClickListener(new View.OnClickListener() {
@@ -40,7 +47,38 @@ public class ConnectFragment extends Fragment{
                 listener.onConnectButtonPressed();
             }
         });
+
+        creditBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                creditsView = true;
+                onSetCreditView();
+            }
+        });
+
         return view;
+    }
+
+    public void onSetCreditView()
+    {
+        connectBtn.setVisibility(View.INVISIBLE);
+        creditBtn.setVisibility(View.INVISIBLE);
+        creditText.setVisibility(View.VISIBLE);
+    }
+
+    public void onReturnCreditView()
+    {
+        connectBtn.setVisibility(View.VISIBLE);
+        creditBtn.setVisibility(View.VISIBLE);
+        creditText.setVisibility(View.INVISIBLE);
+    }
+
+    public boolean isCreditsView() {
+        return creditsView;
+    }
+
+    public void setCreditsView(boolean creditsView) {
+        this.creditsView = creditsView;
     }
 
     /**
