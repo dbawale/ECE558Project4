@@ -386,8 +386,9 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
             @Override
             public void run() {
                 MusicFragment fragment= new MusicFragment();
-                fragment.updateGraph((-dBValue),(float)seconds);
-                fragment.changeColor(mArrayOfRandomNumbers[0],mArrayOfRandomNumbers[1],mArrayOfRandomNumbers[2]);
+                fragment.updateGraph((dBValue),(float)seconds);
+                if (mArrayOfRandomNumbers != null)
+                    fragment.changeColor(mArrayOfRandomNumbers[0],mArrayOfRandomNumbers[1],mArrayOfRandomNumbers[2]);
                 //Comment above two lines and uncomment below lines if testing MusicFragment
                 // without bluetooth connection
                 //DO NOT DELETE ANY OF THESE LINES

@@ -9,6 +9,7 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:orientation="vertical"
     android:background="@drawable/bkgrnd6"
+
     tools:context="srivatsa.yogendra.pdx.edu.esp_final.MusicActivity">
 
     <FrameLayout

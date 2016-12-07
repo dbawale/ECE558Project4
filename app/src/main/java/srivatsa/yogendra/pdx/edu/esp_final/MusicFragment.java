@@ -42,6 +42,11 @@ public class MusicFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_music, container, false);
         GraphView graph = (GraphView) view.findViewById(R.id.graph);
+        graph.getGridLabelRenderer().setGridColor(-1);
+        graph.getGridLabelRenderer().setHighlightZeroLines(false);
+        graph.getGridLabelRenderer().setHorizontalLabelsVisible(false);
+        graph.getGridLabelRenderer().setVerticalLabelsVisible(false);
+
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(-5);
         graph.getViewport().setMaxX(2);
