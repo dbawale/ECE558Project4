@@ -64,15 +64,6 @@ private static final String TAG = "BluetoothDevices";
             Toast.makeText(getApplicationContext(),R.string.bluetooth_not_supported,Toast.LENGTH_SHORT).show();
             finish();
         }
-
-        if(!bluetoothAdapter.isEnabled()){
-        Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-        startActivityForResult(turnOn, REQUEST_CONNECT_DEVICE);
-        }
-        else {
-
-            setPairedDevices(pairedDevicesArrayAdapter);
-        }
     }
 
     @Override
@@ -165,17 +156,9 @@ private static final String TAG = "BluetoothDevices";
 
     @Override
     public void onBackPressed(){
-
-
-        if (backPressedCount < 1 ){
-            msg("Press back again to exit");
-            backPressedCount = backPressedCount + 1;
-        }
-        else{
-            msg("Bye Bye.....");
-            backPressedCount = 0;
-            finish();
-        }
+        Intent intent = new Intent(BluetoothActivity.this,MusicActivity.class);
+        startActivity(intent);
+        finish();
     }
 
 }

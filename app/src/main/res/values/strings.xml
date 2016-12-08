@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">NatAktu</string>
+    <string name="app_name">Nataktu</string>
     <string name="title_paired_devices">Paired Devices</string>
     <string name="title_other_devices">Available Devices</string>
     <string name="bluetooth_not_supported">Bluetooth is not supported on this device</string>

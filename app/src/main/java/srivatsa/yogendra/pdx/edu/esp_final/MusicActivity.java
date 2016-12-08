@@ -1,21 +1,5 @@
 package srivatsa.yogendra.pdx.edu.esp_final;
 
-
-/**
- * DONE: Replace LineGraph by BarGraph
- * Done: On exit from app or MusicActivity Disconnect bluetooth
- * Done: When application exists, disconnect bluetooth connection between phone and board : OnDestroy()
- * DONE: When bluetooth is switched off, then the application should return to MusicActivity.
- * DONE: OnResume, check if the Bluetooth connection exists, if not then the first Acivity MusicActiviy should be launched and the user be asked to connect to bluetooth.
- * DONE: Check if microphone is switched on when the application starts.
- * DONE: OnResume, check if microphone is on.
- * DONE: UI Enhancement
- * DONE: Send double color to an LED.
- * DONE: Color of the graph changes according to the LED value
- * DONE: The graph is inverted
- */
-
-
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -87,12 +71,16 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music);
         backPressedCount = 0;
+
+        //Check if microphone permission is granted, if not, ask for it
         isMicrophoneOn();
 
         if(findViewById(R.id.connect_frame_layout)==null){
             if(savedInstanceState !=null){
                 return;
             }
+
+            //Load ConnectFragment
             connectFragment = new ConnectFragment();
             getSupportFragmentManager().beginTransaction()
                     .add(R.id.music_frame_layout,connectFragment)
@@ -380,10 +368,10 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                MusicFragment fragment= new MusicFragment();
-                fragment.updateGraph((dBValue),(float)seconds);
+                musicFragment.updateGraph((dBValue),(float)seconds);
                 if (mArrayOfRandomNumbers != null)
-                    fragment.changeColor(mArrayOfRandomNumbers[0],mArrayOfRandomNumbers[1],mArrayOfRandomNumbers[2]);
+                    musicFragment.changeColor(mArrayOfRandomNumbers[0],mArrayOfRandomNumbers[1],mArrayOfRandomNumbers[2]);
+
                 //Comment above two lines and uncomment below lines if testing MusicFragment
                 // without bluetooth connection
                 //DO NOT DELETE ANY OF THESE LINES
@@ -608,17 +596,6 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
             return sb.toString();
         }
     }
-//
-//    @Override
-//    public void onDestroy(){
-//        if (btSocket.isConnected()){
-//            try {
-//                btSocket.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        }
-//    }
 
     /**
      * Class to Establish Bluetooth Connection.
@@ -685,6 +662,12 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
         }
     }
 
+    /**
+     * If the result is from BluetoothActivity then see if device is available and connect to it
+     * @param requestCode Request code that was originally issued
+     * @param resultCode The result code from the activity
+     * @param intent Intent associated with the activity that was started for result
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent){
         switch (requestCode){
@@ -702,6 +685,12 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
         }
     }
 
+    /**
+     * Called when permission request is complete
+     * @param requestCode Request code for permissions
+     * @param permissions Permissions
+     * @param grantResults Whether permissions were granted or not
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -719,6 +708,9 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
         }
     }
 
+    /**
+     * Overridden onBackPressed to implement check for twice pressed
+     */
     @Override
     public void onBackPressed(){
 
@@ -753,6 +745,9 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
         }
     }
 
+    /**
+     * Checks if microphone permission is granted
+     */
     public void isMicrophoneOn(){
         int permission = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.RECORD_AUDIO);
@@ -763,6 +758,9 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
 
     }
 
+    /**
+     * onResume, if bluetooth is not connected then connect it
+     */
     @Override
     public void onResume(){
         super.onResume();
@@ -779,6 +777,9 @@ public class MusicActivity extends FragmentActivity implements ConnectFragment.O
         }
     }
 
+    /**
+     * Stop listening if user presses home button
+     */
     @Override
     public void onPause() {
 

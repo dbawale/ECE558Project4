@@ -17,6 +17,7 @@ import com.jjoe64.graphview.series.DataPoint;
 
 
 public class MusicFragment extends Fragment {
+
     private OnMusicButtonPressedListener mListener;
     private Button startButton, stopButton;
     static BarGraphSeries<DataPoint> series;
@@ -24,6 +25,7 @@ public class MusicFragment extends Fragment {
     private final int REQUEST_CODE_CONNECT =1;
 
     private Runnable mTimer;
+
     public MusicFragment() {
         // Required empty public constructor
     }
@@ -58,6 +60,8 @@ public class MusicFragment extends Fragment {
         graph.addSeries(series);
         startButton = (Button) view.findViewById(R.id.startbutton);
         stopButton = (Button) view.findViewById(R.id.stopbutton);
+
+        //Set startButton to call onStartButtonPressed which is implemented in MusicActivity
         startButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -67,6 +71,8 @@ public class MusicFragment extends Fragment {
                 listener.onStartButtonPressed();
             }
         });
+
+        //Set stopButton to call onStopButtonPressed which is implemented in MusicActivity
         stopButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -79,7 +85,7 @@ public class MusicFragment extends Fragment {
         return view;
     }
 
-
+    //When the fragment attaches check if the activity implements the interface
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -97,6 +103,7 @@ public class MusicFragment extends Fragment {
         mListener = null;
     }
 
+    //Show start button, hide stop button
     public void setStartEnabled(){
         stopButton.setVisibility(View.INVISIBLE);
         startButton.setVisibility(View.VISIBLE);
@@ -105,6 +112,7 @@ public class MusicFragment extends Fragment {
         isStopEnabled = false;
     }
 
+    //Show stopbutton, hide startbutton
     public void setStopEnabled(){
         startButton.setVisibility(View.INVISIBLE);
         startButton.setEnabled(false);
@@ -113,17 +121,19 @@ public class MusicFragment extends Fragment {
         stopButton.setVisibility(View.VISIBLE);
     }
 
+    //Update GraphView
     public void updateGraph(final double dBValue, final float seconds){
                 series.appendData(new DataPoint(seconds, dBValue), true, 400);
     }
 
+    //Change the color of thr graph
     public void changeColor(int RED, int BLUE, int GREEN){
         Paint paint = new Paint();
         paint.setColor(Color.rgb(RED,GREEN,BLUE));
         series.setCustomPaint(paint);
     }
 
-
+    //Any activity that contains this fragment should also implement this interface
     public interface OnMusicButtonPressedListener {
         void onStartButtonPressed();
         void onStopButtonPressed();
