@@ -11,7 +11,7 @@
     <string name="durationText">DURATION</string>
     <string name="thresholdText">THRESHOLD</string>
     <string name="bluetooth_connect">CONNECT</string>
-    <string name="scanDevices">Scan for More Devices</string>
+    <string name="scanDevices">More Devices</string>
     <string name="credits">CREDITS</string>
     <string name="teamName"><i>Developers:</i>\n\nDeven Bawale\n\nSrivatsa Yogendra\n\nTejaswini Vibhute</string>
 
