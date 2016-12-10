@@ -1,5 +1,9 @@
 package srivatsa.yogendra.pdx.edu.esp_final;
 
+/**
+ * Created by Tejaswini Vibhute, Srivatsa Yogendra and Deven Bawale on 12/3/2016.
+ */
+
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -8,8 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-
-import org.w3c.dom.Text;
 
 
 public class ConnectFragment extends Fragment{
@@ -48,6 +50,7 @@ public class ConnectFragment extends Fragment{
             }
         });
 
+        //Credits shown for the developers
         creditBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -59,12 +62,19 @@ public class ConnectFragment extends Fragment{
         return view;
     }
 
+    /**
+     * Code to enable the views that show the text fields consisting of the Developers names
+     */
     public void onSetCreditView()
     {
         connectBtn.setVisibility(View.INVISIBLE);
         creditBtn.setVisibility(View.INVISIBLE);
         creditText.setVisibility(View.VISIBLE);
     }
+
+    /**
+     * Code to disable the views that show the text fields consisting of the Developers names
+     */
 
     public void onReturnCreditView()
     {
@@ -73,10 +83,20 @@ public class ConnectFragment extends Fragment{
         creditText.setVisibility(View.INVISIBLE);
     }
 
+
+    /**
+     * Indicates the view in display
+     * @return True - The app is showing the Credits
+     *         False - The app is not showing the credits
+     */
     public boolean isCreditsView() {
         return creditsView;
     }
 
+    /**
+     * Sets if the credits view is enabled or disabled
+     * @param creditsView Boolean indicating the status
+     */
     public void setCreditsView(boolean creditsView) {
         this.creditsView = creditsView;
     }

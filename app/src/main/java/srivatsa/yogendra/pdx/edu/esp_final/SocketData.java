@@ -3,7 +3,7 @@ package srivatsa.yogendra.pdx.edu.esp_final;
 import android.bluetooth.BluetoothSocket;
 
 /**
- * Created by Tejaswini on 12/3/2016.
+ * Created by Tejaswini Vibhute, Srivatsa Yogendra and Deven Bawale on 12/3/2016.
  */
 
 public final class SocketData {

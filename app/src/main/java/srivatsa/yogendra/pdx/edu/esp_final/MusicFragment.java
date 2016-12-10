@@ -1,5 +1,9 @@
 package srivatsa.yogendra.pdx.edu.esp_final;
 
+/**
+ * Created by Tejaswini Vibhute, Srivatsa Yogendra and Deven Bawale on 12/3/2016.
+ */
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -24,7 +28,6 @@ public class MusicFragment extends Fragment {
     static Boolean isStopEnabled = false;
     private final int REQUEST_CODE_CONNECT =1;
 
-    private Runnable mTimer;
 
     public MusicFragment() {
         // Required empty public constructor
@@ -46,18 +49,20 @@ public class MusicFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_music, container, false);
         GraphView graph = (GraphView) view.findViewById(R.id.graph);
+
+        // The Visual setting for the GraphView
         graph.getGridLabelRenderer().setGridColor(-1);
         graph.getGridLabelRenderer().setHighlightZeroLines(false);
         graph.getGridLabelRenderer().setHorizontalLabelsVisible(false);
         graph.getGridLabelRenderer().setVerticalLabelsVisible(false);
-
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(-5);
         graph.getViewport().setMaxX(2);
         graph.getViewport().setMaxY(0);
         graph.getViewport().setMinY(-100);
-
         graph.addSeries(series);
+
+
         startButton = (Button) view.findViewById(R.id.startbutton);
         stopButton = (Button) view.findViewById(R.id.stopbutton);
 

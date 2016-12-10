@@ -1,5 +1,16 @@
 package srivatsa.yogendra.pdx.edu.esp_final;
 
+
+/**
+ * Created by Tejaswini Vibhute, Srivatsa Yogendra and Deven Bawale on 12/3/2016.
+ *
+ * The code is inspired from the android example initiating Bluetooth connection
+ * in android.
+ *
+ * References: https://developer.android.com/guide/topics/connectivity/bluetooth.html
+ *
+ */
+
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -147,7 +158,7 @@ private static final String TAG = "BluetoothDevices";
         }
     };
 
-    // display toast
+    // Easy way to display toast
     private void msg(String s)
     {
         Toast.makeText(getApplicationContext(),s,Toast.LENGTH_SHORT).show();
