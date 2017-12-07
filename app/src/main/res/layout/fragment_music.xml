@@ -1,0 +1,47 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:backgroundTintMode="src_over"
+    tools:context="srivatsa.yogendra.pdx.edu.esp_final.MusicFragment"
+    android:id="@+id/music_graph_layout">
+
+    <com.jjoe64.graphview.GraphView
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_marginTop="50dp"
+        android:id="@+id/graph"
+        />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="84dp"
+        android:id="@+id/startbutton"
+        android:text="@string/startButton"
+        android:textAllCaps="true"
+        android:textSize="@dimen/connect_size"
+        android:textStyle="bold"
+        android:textColor="@color/colorWhite"
+        android:background="@android:color/transparent"
+        />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="84dp"
+        android:id="@+id/stopbutton"
+        android:text="@string/stopButton"
+        android:visibility="invisible"
+        android:textAllCaps="true"
+        android:textSize="@dimen/connect_size"
+        android:textStyle="bold"
+        android:textColor="@color/colorWhite"
+        android:background="@android:color/transparent"
+        />
+
+</RelativeLayout>

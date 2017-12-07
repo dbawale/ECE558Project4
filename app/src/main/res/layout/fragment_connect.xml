@@ -1,0 +1,74 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:foregroundGravity="center"
+    tools:context="srivatsa.yogendra.pdx.edu.esp_final.ConnectFragment"
+    android:layout_centerVertical="true"
+    android:layout_centerInParent="true"
+    android:layout_centerHorizontal="true"
+    android:id="@+id/connect_frame_layout">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="70dp"
+        android:text="@string/app_name"
+        android:textAllCaps="true"
+        android:textStyle="bold"
+        android:fontFamily="cursive"
+        android:textAlignment="center"
+        android:textSize="@dimen/applicationTitle"
+        android:textColor="@android:color/holo_blue_light"
+        android:id="@+id/titleApplication"
+        />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/creditsbtn"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:text="@string/credits"
+        android:textAllCaps="true"
+        android:textSize="@dimen/connect_size"
+        android:textStyle="bold"
+        android:textColor="@color/colorWhite"
+        android:background="@android:color/transparent"
+        android:layout_marginBottom="143dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:text="@string/bluetooth_connect"
+        android:textAllCaps="true"
+        android:textSize="@dimen/connect_size"
+        android:textStyle="bold"
+        android:textColor="@color/colorWhite"
+        android:background="@android:color/transparent"
+        android:id="@+id/connectbtn"
+        android:layout_marginBottom="36dp"
+        android:layout_above="@+id/creditsbtn"
+        android:layout_alignParentStart="true" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:textColor="@color/colorWhite"
+        android:text="@string/teamName"
+        android:textSize="@dimen/connect_size"
+        android:layout_marginBottom="143dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:visibility="invisible"
+        android:id="@+id/creditsText"
+        />
+
+</RelativeLayout>

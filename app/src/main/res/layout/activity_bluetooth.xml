@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
+    <!--xmlns:tools="http://schemas.android.com/tools"-->
+    <!--android:id="@+id/activity_bluetooth"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:orientation="vertical"-->
+    <!--tools:context="srivatsa.yogendra.pdx.edu.esp_final.BluetoothActivity">-->
+
+    <!--<ListView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="0dp"-->
+        <!--android:layout_weight="1"-->
+        <!--android:id="@+id/list">-->
+
+    <!--</ListView>-->
+
+<!--</LinearLayout>-->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bkgrnd6"
+    tools:context="srivatsa.yogendra.pdx.edu.esp_final.BluetoothActivity">
+
+        <TextView
+            android:id="@+id/title_paired_devices"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/background_dark"
+            android:paddingLeft="5dp"
+            android:text="@string/title_paired_devices"
+            android:textColor="@color/colorWhite"
+            android:textAllCaps="false"
+            android:textSize="@dimen/titleSize"
+            android:visibility="gone" />
+
+        <ListView
+            android:id="@+id/paired_devices"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:stackFromBottom="false"
+            android:background="@android:color/background_light"
+            />
+
+        <TextView
+            android:id="@+id/title_new_devices"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            android:paddingLeft="5dp"
+            android:text="@string/title_other_devices"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/deviceSize"
+            android:visibility="gone" />
+
+    <!--android:textColor="#fff"-->
+        <!--<ListView-->
+            <!--android:id="@+id/new_devices"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="0dp"-->
+            <!--android:layout_weight="1"-->
+            <!--android:stackFromBottom="true" />-->
+
+        <Button
+            android:id="@+id/button_scan"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/scanDevices"
+            android:textAllCaps="true"
+            android:textSize="@dimen/connect_size"
+            android:textStyle="bold"
+            android:textColor="@color/colorWhite"
+            android:background="@android:color/transparent"
+            />
+    </LinearLayout>
